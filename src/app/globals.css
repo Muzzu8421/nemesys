@@ -196,160 +196,7 @@ body {
   transform: rotate(-30deg);
 }
 
-/* ============================================
-   NAVBAR
-   ============================================ */
 
-.hero-nav {
-  position: relative;
-  z-index: 50;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 24px 48px;
-}
-
-.hero-nav-logo {
-  display: flex;
-  align-items: center;
-  text-decoration: none;
-}
-
-.hero-logo-img {
-  height: 44px;
-  width: auto !important;
-  object-fit: contain;
-}
-
-.hero-nav-links {
-  display: flex;
-  align-items: center;
-  gap: 0;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 999px;
-  padding: 6px 6px;
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-}
-
-.hero-nav-links a {
-  padding: 8px 20px;
-  font-size: 0.875rem;
-  color: rgba(255, 255, 255, 0.7);
-  text-decoration: none;
-  border-radius: 999px;
-  transition: color 0.2s ease, background 0.2s ease;
-  font-weight: 400;
-  white-space: nowrap;
-}
-
-.hero-nav-links a:hover {
-  color: #fff;
-  background: rgba(255, 255, 255, 0.06);
-}
-
-.hero-nav-links a.nav-cta-btn {
-  background: rgba(255, 255, 255, 0.12);
-  color: #fff;
-  font-weight: 500;
-  border-radius: 999px;
-  padding: 8px 22px;
-  margin-left: 4px;
-  transition: all 0.2s ease;
-}
-
-.hero-nav-links a.nav-cta-btn:hover {
-  background: rgba(255, 255, 255, 0.22);
-}
-
-/* ============================================
-   HERO CONTENT
-   ============================================ */
-
-.hero-content-wrapper {
-  position: relative;
-  z-index: 10;
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  padding: 80px 48px 60px;
-  gap: 60px;
-  max-width: 1400px;
-  margin: 0 auto;
-}
-
-.hero-text {
-  flex: 1;
-  max-width: 550px;
-  padding-top: 20px;
-}
-
-.hero-text h1 {
-  font-size: clamp(2.8rem, 5vw, 4rem);
-  font-weight: 400;
-  line-height: 1.15;
-  color: #fff;
-  margin-bottom: 24px;
-  letter-spacing: -0.02em;
-  font-style: italic;
-}
-
-.hero-text h1 .highlight {
-  color: var(--color-accent-blue);
-  font-style: italic;
-}
-
-.hero-text .subtitle {
-  font-size: 1rem;
-  line-height: 1.7;
-  color: rgba(255, 255, 255, 0.5);
-  margin-bottom: 40px;
-  max-width: 420px;
-  font-weight: 300;
-}
-
-.hero-buttons {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.hero-btn-primary {
-  padding: 12px 24px;
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: #fff;
-  background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  border-radius: 999px;
-  cursor: pointer;
-  transition: all 0.25s ease;
-  text-decoration: none;
-}
-
-.hero-btn-primary:hover {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.5);
-}
-
-.hero-btn-secondary {
-  padding: 12px 24px;
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: #fff;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 999px;
-  cursor: pointer;
-  transition: all 0.25s ease;
-  text-decoration: none;
-}
-
-.hero-btn-secondary:hover {
-  background: rgba(255, 255, 255, 0.14);
-  border-color: rgba(255, 255, 255, 0.2);
-}
 
 /* ============================================
    DASHBOARD MOCKUP
@@ -742,28 +589,10 @@ body {
    ============================================ */
 
 @media (max-width: 1024px) {
-  .hero-content-wrapper {
-    flex-direction: column;
-    padding: 60px 32px 40px;
-    gap: 40px;
-  }
-
-  .hero-text {
-    max-width: 100%;
-  }
-
   .hero-dashboard {
     max-width: 100%;
     justify-content: center;
     min-height: auto;
-  }
-
-  .hero-nav {
-    padding: 20px 24px;
-  }
-
-  .hero-nav-links {
-    display: none;
   }
 
   .hero-partners {
@@ -772,10 +601,6 @@ body {
 }
 
 @media (max-width: 640px) {
-  .hero-text h1 {
-    font-size: 2.2rem;
-  }
-
   .dashboard-sidebar {
     width: 200px;
   }
@@ -783,11 +608,6 @@ body {
   .dashboard-main {
     width: 260px;
     margin-left: -30px;
-  }
-
-  .hero-buttons {
-    flex-direction: column;
-    align-items: flex-start;
   }
 
   .partners-logos {

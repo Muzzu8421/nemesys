@@ -18,44 +18,44 @@ export default function Home() {
         />
 
         {/* Top Navbar */}
-        <nav className="hero-nav">
-          <a href="#" className="hero-nav-logo">
+        <nav className="relative z-50 flex items-center justify-between px-6 md:px-12 py-5 md:py-6">
+          <a href="#" className="flex items-center no-underline">
             <Image
               src="/logo.png"
               alt="Nemesys Logo"
               width={140}
               height={40}
-              className="hero-logo-img"
+              className="h-11 w-auto object-contain"
             />
           </a>
 
-          <div className="hero-nav-links">
-            <a href="#">Product</a>
-            <a href="#">Pricing</a>
-            <a href="#">How it works</a>
-            <a href="#">About</a>
-            <a href="#">Resources</a>
-            <a href="#" className="nav-cta-btn">Get started</a>
+          <div className="hidden lg:flex items-center gap-0 bg-white/5 border border-white/10 rounded-full p-1.5 backdrop-blur-md">
+            <a href="#" className="px-5 py-2 text-sm text-white/70 no-underline rounded-full transition-colors duration-200 font-normal whitespace-nowrap hover:text-white hover:bg-white/5">Product</a>
+            <a href="#" className="px-5 py-2 text-sm text-white/70 no-underline rounded-full transition-colors duration-200 font-normal whitespace-nowrap hover:text-white hover:bg-white/5">Pricing</a>
+            <a href="#" className="px-5 py-2 text-sm text-white/70 no-underline rounded-full transition-colors duration-200 font-normal whitespace-nowrap hover:text-white hover:bg-white/5">How it works</a>
+            <a href="#" className="px-5 py-2 text-sm text-white/70 no-underline rounded-full transition-colors duration-200 font-normal whitespace-nowrap hover:text-white hover:bg-white/5">About</a>
+            <a href="#" className="px-5 py-2 text-sm text-white/70 no-underline rounded-full transition-colors duration-200 font-normal whitespace-nowrap hover:text-white hover:bg-white/5">Resources</a>
+            <a href="#" className="px-6 py-2 text-sm text-white bg-white/10 font-medium rounded-full ml-1 transition-all duration-200 hover:bg-white/20 whitespace-nowrap">Get started</a>
           </div>
         </nav>
 
         {/* Hero Content */}
-        <div className="hero-content-wrapper">
+        <div className="relative z-10 flex flex-col lg:flex-row items-start justify-between px-8 md:px-12 pt-16 md:pt-20 pb-16 gap-10 md:gap-16 max-w-[1400px] mx-auto">
           {/* Left side - Text */}
-          <div className="hero-text">
-            <h1>
+          <div className="flex-1 max-w-full lg:max-w-[550px] pt-5">
+            <h1 className="text-[clamp(2.2rem,5vw,4rem)] font-normal leading-[1.15] text-white mb-6 tracking-[-0.02em] italic">
               Your next big<br />
-              <span className="highlight">decision</span> deserves<br />
+              <span className="text-accent-blue italic">decision</span> deserves<br />
               a straight answer
             </h1>
-            <p className="subtitle">
+            <p className="text-base leading-[1.7] text-white/50 mb-10 max-w-[420px] font-light">
               Ask your finances anything, in plain English.<br />
               No more stitching together Stripe, accounting, and<br />
               spreadsheets — just answers, instantly.
             </p>
-            <div className="hero-buttons">
-              <a href="#" className="hero-btn-primary">Get started</a>
-              <a href="#" className="hero-btn-secondary">See how it works</a>
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+              <a href="#" className="px-6 py-3 text-sm font-medium text-white bg-transparent border border-white/30 rounded-full cursor-pointer transition-all duration-300 no-underline hover:bg-white/10 hover:border-white/50">Get started</a>
+              <a href="#" className="px-6 py-3 text-sm font-medium text-white bg-white/10 border border-white/10 rounded-full cursor-pointer transition-all duration-300 no-underline hover:bg-white/15 hover:border-white/20">See how it works</a>
             </div>
           </div>
 
