@@ -130,8 +130,8 @@ export default function Home() {
       <main className="flex-1 w-full max-w-7xl mx-auto px-6 py-12 flex flex-col gap-24">
 
         {/* Large Highlighted Paragraph */}
-        <section className="py-12 px-4 max-w-5xl mx-auto text-center">
-          <p className="text-2xl md:text-4xl lg:text-5xl font-medium leading-relaxed text-gray-400">
+        <section className="py-8 md:py-12 px-4 max-w-5xl mx-auto text-center">
+          <p className="text-xl md:text-3xl lg:text-5xl font-medium leading-relaxed text-gray-400">
             Nemesys is the brainchild of a group who have <span className="text-neon-green font-semibold">linked up with elite cybersecurity engineers</span> and compiler designers to create an advanced static analysis system. This enterprise scanning console can <span className="text-neon-purple font-semibold">execute deep inspections on CRITICAL INFRASTRUCTURE</span>, which are <span className="text-neon-pink font-semibold">state-of-the-art in their nature!</span>
           </p>
         </section>
@@ -197,10 +197,10 @@ export default function Home() {
             </div>
 
             {/* Bento Large Card 2 */}
-            <div className="glass-card lg:col-span-2 rounded-[2rem] p-8 md:p-12 flex flex-col md:flex-row justify-between items-center group overflow-hidden gap-8">
-              <div className="flex-1">
-                <h3 className="text-2xl font-bold text-white mb-3">Strategic Patch Management</h3>
-                <p className="text-gray-400">When limits are hit, open vulnerabilities gracefully close, creating an opportunity for automated AI patch generation.</p>
+            <div className="glass-card lg:col-span-2 rounded-[2rem] p-6 md:p-12 flex flex-col lg:flex-row justify-between items-center group overflow-hidden gap-8">
+              <div className="flex-1 text-center lg:text-left">
+                <h3 className="text-xl md:text-2xl font-bold text-white mb-3">Strategic Patch Management</h3>
+                <p className="text-gray-400 text-sm md:text-base">When limits are hit, open vulnerabilities gracefully close, creating an opportunity for automated AI patch generation.</p>
               </div>
               <div className="flex-1 ui-mockup-window w-full h-48 flex items-end p-4 gap-2 group-hover:opacity-80 transition-opacity">
                 {/* Fake Chart bars */}
@@ -220,8 +220,8 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-6 py-20 flex flex-col md:flex-row gap-16 md:gap-8 justify-between">
           
           {/* Giant Logo Left Side */}
-          <div className="flex-1 flex items-center justify-center md:justify-start">
-            <div className="relative">
+          <div className="flex-1 flex items-center justify-center md:justify-start overflow-hidden">
+            <div className="relative scale-50 md:scale-75 lg:scale-100 origin-center md:origin-left transform transition-transform">
               {/* Giant Glowing Triangle */}
               <div className="w-0 h-0 
                 border-l-[100px] border-l-transparent
@@ -239,7 +239,7 @@ export default function Home() {
                 absolute top-6 left-5
                 transform -rotate-12
               "></div>
-              <div className="absolute top-1/2 left-[120%] -translate-y-1/2 text-4xl font-bold text-white tracking-widest hidden lg:block">
+              <div className="absolute top-1/2 left-[120%] -translate-y-1/2 text-4xl font-bold text-white tracking-widest hidden md:block">
                 NEMESYS
               </div>
             </div>

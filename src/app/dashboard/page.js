@@ -24,11 +24,17 @@ export default function Dashboard() {
   ];
 
   return (
-    <div className="flex h-screen w-full bg-[#0a0a0a] text-[#e0e0e0] font-sans overflow-hidden">
+    <div className="flex h-screen w-full bg-[#0a0a0a] text-[#e0e0e0] font-sans overflow-hidden relative">
 
-      {/* Sidebar */}
+      {/* Mobile Overlay */}
+      {sidebarOpen && (
+        <div 
+          className="md:hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-30" 
+          onClick={() => setSidebarOpen(false)} 
+        />
+      )}      {/* Sidebar */}
       <div
-        className={`${sidebarOpen ? 'w-[280px]' : 'w-0'} flex-shrink-0 flex flex-col bg-[#000000] border-r border-white/10 transition-all duration-300 ease-in-out overflow-hidden relative z-20`}
+        className={`${sidebarOpen ? 'w-[280px] translate-x-0' : 'w-[280px] -translate-x-full md:w-0 md:translate-x-0'} fixed md:relative z-40 h-full flex-shrink-0 flex flex-col bg-[#111111] border-r border-white/10 transition-all duration-300 ease-in-out overflow-hidden`}
       >
         {/* Sidebar Header */}
         <div className="p-4 flex items-center justify-between border-b border-white/10">
@@ -107,7 +113,7 @@ export default function Dashboard() {
           </div>
         )}
 
-        <div className="flex-1 flex flex-col items-center justify-center p-8 relative overflow-hidden">
+        <div className="flex-1 flex flex-col items-center justify-center p-4 md:p-8 relative overflow-hidden">
 
           {/* subtle background glow */}
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] pointer-events-none opacity-20">
@@ -117,14 +123,14 @@ export default function Dashboard() {
 
           <div className="max-w-4xl w-full flex flex-col items-center text-center z-10">
 
-            <h1 className="text-3xl font-light text-white mb-4 tracking-wide">What would you like to build today?</h1>
-            <p className="text-[#888] text-base mb-14 max-w-2xl font-light">
+            <h1 className="text-2xl md:text-3xl font-light text-white mb-4 tracking-wide px-4">What would you like to build today?</h1>
+            <p className="text-[#888] text-sm md:text-base mb-10 md:mb-14 max-w-2xl font-light px-4">
               Start a new session by importing your existing project from GitHub or uploading a folder directly to the Antigravity console.
             </p>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-2xl">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 w-full max-w-2xl px-4">
               {/* Option 1: GitHub */}
-              <button className="group relative flex flex-col items-center p-10 bg-[#0d0d0d] border border-white/10 hover:border-neon-purple/50 rounded-2xl transition-all duration-300 hover:shadow-[0_0_40px_rgba(168,85,247,0.1)] text-left overflow-hidden">
+              <button className="group relative flex flex-col items-center p-8 md:p-10 bg-[#0d0d0d] border border-white/10 hover:border-neon-purple/50 rounded-2xl transition-all duration-300 hover:shadow-[0_0_40px_rgba(168,85,247,0.1)] text-left overflow-hidden">
                 <div className="absolute inset-0 bg-gradient-to-br from-neon-purple/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                 <div className="w-16 h-16 bg-[#161616] rounded-xl flex items-center justify-center border border-white/5 mb-6 group-hover:scale-110 transition-transform duration-300 shadow-inner">
                   <svg className="text-[#aaa] group-hover:text-neon-purple transition-colors duration-300" width="32" height="32" viewBox="0 0 24 24" fill="currentColor">
@@ -138,7 +144,7 @@ export default function Dashboard() {
               </button>
 
               {/* Option 2: Upload Folder */}
-              <button className="group relative flex flex-col items-center p-10 bg-[#0d0d0d] border border-white/10 hover:border-neon-cyan/50 rounded-2xl transition-all duration-300 hover:shadow-[0_0_40px_rgba(6,182,212,0.1)] text-left overflow-hidden">
+              <button className="group relative flex flex-col items-center p-8 md:p-10 bg-[#0d0d0d] border border-white/10 hover:border-neon-cyan/50 rounded-2xl transition-all duration-300 hover:shadow-[0_0_40px_rgba(6,182,212,0.1)] text-left overflow-hidden">
                 <div className="absolute inset-0 bg-gradient-to-br from-neon-cyan/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                 <div className="w-16 h-16 bg-[#161616] rounded-xl flex items-center justify-center border border-white/5 mb-6 group-hover:scale-110 transition-transform duration-300 shadow-inner">
                   <Upload size={32} className="text-[#aaa] group-hover:text-neon-cyan transition-colors duration-300" />
