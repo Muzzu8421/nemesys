@@ -1,6 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  /* config options here */
+  serverExternalPackages: ["web-tree-sitter", "tree-sitter-wasms"],
 };
 
 export default nextConfig;
