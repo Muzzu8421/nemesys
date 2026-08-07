@@ -327,7 +327,7 @@ export default function Dashboard() {
 
             {isLoading ? (
               <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
-                <KineticTextLoader />
+                <KineticTextLoader className="text-white" />
                 {scanState.status === "filtering" && (
                   <p className="text-sm text-[#666]">
                     Processing {scanState.processed.toLocaleString()} / {scanState.total.toLocaleString()} files…
