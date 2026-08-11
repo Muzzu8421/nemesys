@@ -1,4 +1,5 @@
 import { parseFiles } from "../../../../core/parser";
+import { analyzeFiles } from "../../../../core/taint-analysis";
 
 const IGNORED_PATTERNS = [
   "node_modules/",
@@ -73,11 +74,19 @@ export async function POST(request) {
 
     const parsedFiles = await parseFiles(collectedFiles);
 
+    const contentByPath = new Map(collectedFiles.map((f) => [f.path, f.content]));
+    const analysisInput = parsedFiles.map((p) => ({
+      filePath: p.filePath,
+      tree: p.tree,
+      sourceCode: contentByPath.get(p.filePath),
+    }));
+
+    const findings = analyzeFiles(analysisInput);
+
     return Response.json({
-      message: "Files received and parsed successfully.",
-      fileCount: parsedFiles.length,
-      files: parsedFiles.map((f) => ({ path: f.filePath, grammar: f.grammar })),
-      skipped,
+      message: "Scan complete.",
+      fileCount: collectedFiles.length,
+      findings,
     });
   } catch (error) {
     console.error("Error in /api/scan/upload:", error);
@@ -87,3 +96,4 @@ export async function POST(request) {
     );
   }
 }
+

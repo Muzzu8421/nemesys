@@ -1,4 +1,5 @@
 import { parseFiles } from "../../../../core/parser";
+import { analyzeFiles } from "../../../../core/taint-analysis";
 
 const IGNORED_PATTERNS = [
   "node_modules/",
@@ -117,10 +118,19 @@ export async function POST(request) {
 
     const parsedFiles = await parseFiles(successfulFiles);
 
+    const contentByPath = new Map(successfulFiles.map((f) => [f.path, f.content]));
+    const analysisInput = parsedFiles.map((p) => ({
+      filePath: p.filePath,
+      tree: p.tree,
+      sourceCode: contentByPath.get(p.filePath),
+    }));
+
+    const findings = analyzeFiles(analysisInput);
+
     return Response.json({
-      message: "Repository files fetched and parsed successfully.",
-      fileCount: parsedFiles.length,
-      files: parsedFiles.map((f) => ({ path: f.filePath, grammar: f.grammar })),
+      message: "Scan complete.",
+      fileCount: successfulFiles.length,
+      findings,
     });
   } catch (error) {
     console.error("Error in /api/scan/github:", error);
@@ -130,3 +140,4 @@ export async function POST(request) {
     );
   }
 }
+

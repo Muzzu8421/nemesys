@@ -1,10 +1,13 @@
 "use client"
 import React, { useState } from 'react';
 import { signOut, useSession } from 'next-auth/react';
-import { MessageSquare, Plus, Upload, LogOut, Search, ChevronLeft, Menu } from 'lucide-react';
+import { MessageSquare, Plus, Upload, LogOut, Search, ChevronLeft, Menu, Shield, ShieldAlert, ChevronDown, ChevronRight, RotateCcw, AlertTriangle, CheckCircle, FileCode, ArrowRight } from 'lucide-react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, BarChart, Bar, XAxis, YAxis } from 'recharts';
 import { KineticTextLoader } from "@/components/ui/kinetic-text-loader";
+import { useLocalAi } from "@/components/local-ai-provider";
+import AttackSimulationView from "@/components/AttackSimulationView";
 
 const IGNORED_PATTERNS = [
   "node_modules/",
@@ -29,11 +32,239 @@ function isSupportedExtension(filePath) {
   return SUPPORTED_EXTENSIONS.some((ext) => filePath.endsWith(ext));
 }
 
+// --- Findings display components ---
+
+const severityColors = {
+  critical: "bg-red-500/10 text-red-400 border-red-500/20",
+  high: "bg-orange-500/10 text-orange-400 border-orange-500/20",
+  medium: "bg-amber-500/10 text-amber-400 border-amber-500/20",
+  low: "bg-blue-500/10 text-blue-400 border-blue-500/20",
+};
+
+function FindingCard({ finding, index }) {
+  const [expanded, setExpanded] = React.useState(index === 0);
+  const { explain } = useLocalAi();
+  const [explanation, setExplanation] = useState(null);
+
+  React.useEffect(() => {
+    if (expanded && !explanation) {
+      explain(finding).then(res => setExplanation(res.text));
+    }
+  }, [expanded, explanation, finding, explain]);
+
+  return (
+    <div className="bg-[#0d0d0d] border border-white/10 rounded-xl overflow-hidden transition-all duration-300 hover:border-amber-500/30">
+      <button
+        onClick={() => setExpanded(!expanded)}
+        className="w-full flex items-center gap-3 px-5 py-4 text-left transition-colors hover:bg-white/[0.02]"
+      >
+        <div className="flex-shrink-0">
+          <ShieldAlert size={20} className="text-amber-400" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-sm font-medium text-white">{finding.vulnerability_type || finding.vulnerabilityType}</span>
+            <span className={`px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider rounded-full border ${severityColors[finding.severity] || "bg-amber-500/15 text-amber-400 border-amber-500/20"}`}>
+              {finding.severity || "Potential"}
+            </span>
+          </div>
+          <p className="text-xs text-[#666] mt-0.5 truncate">{finding.id}</p>
+        </div>
+        <div className="flex-shrink-0 text-[#555]">
+          {expanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+        </div>
+      </button>
+
+      {expanded && (
+        <div className="px-5 pb-5 border-t border-white/5">
+          <div className="mt-4 mb-6 space-y-4">
+            <div>
+              <h4 className="text-xs font-semibold text-[#888] uppercase tracking-wider mb-1">Explanation</h4>
+              <p className="text-sm text-[#aaa] mt-2">
+                {explanation || "Loading explanation..."}
+              </p>
+            </div>
+            
+            {finding.attacker_payload && (
+              <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+                <div>
+                  <div className="text-[#666] mb-1">Example attacker input</div>
+                  <code className="block bg-black/40 rounded px-2 py-1 text-red-300 break-all whitespace-pre-wrap">
+                    {finding.attacker_payload}
+                  </code>
+                </div>
+                <div>
+                  <div className="text-[#666] mb-1">Suggested fix</div>
+                  <div className="text-green-300">{finding.fix_suggestion}</div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <AttackSimulationView finding={finding} />
+        </div>
+      )}
+    </div>
+  );
+}
+
+function AnalyticsDashboard({ findings }) {
+  if (findings.length === 0) return null;
+
+  // Aggregate by severity
+  const severityCounts = { critical: 0, high: 0, medium: 0, low: 0 };
+  findings.forEach(f => {
+    if (severityCounts[f.severity] !== undefined) {
+      severityCounts[f.severity]++;
+    }
+  });
+
+  const pieData = Object.keys(severityCounts)
+    .filter(k => severityCounts[k] > 0)
+    .map(k => ({ name: k.charAt(0).toUpperCase() + k.slice(1), value: severityCounts[k], severity: k }));
+
+  const COLORS = {
+    critical: '#ef4444',
+    high: '#f97316',
+    medium: '#f59e0b',
+    low: '#3b82f6'
+  };
+
+  // Aggregate by type
+  const typeMap = {};
+  findings.forEach(f => {
+    typeMap[f.vulnerability_type] = (typeMap[f.vulnerability_type] || 0) + 1;
+  });
+  const barData = Object.keys(typeMap).map(k => ({ name: k, count: typeMap[k] }))
+    .sort((a, b) => b.count - a.count);
+
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+      {/* Donut Chart */}
+      <div className="bg-[#0d0d0d] border border-white/10 rounded-xl p-4 flex flex-col items-center">
+        <h3 className="text-sm font-medium text-[#888] mb-4 self-start">Severity Breakdown</h3>
+        <div className="w-full h-[200px]">
+          <ResponsiveContainer width="100%" height="100%">
+            <PieChart>
+              <Pie
+                data={pieData}
+                cx="50%"
+                cy="50%"
+                innerRadius={60}
+                outerRadius={80}
+                paddingAngle={5}
+                dataKey="value"
+                stroke="none"
+              >
+                {pieData.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={COLORS[entry.severity]} />
+                ))}
+              </Pie>
+              <Tooltip 
+                contentStyle={{ backgroundColor: '#111', borderColor: '#333', borderRadius: '8px' }}
+                itemStyle={{ color: '#fff' }}
+              />
+            </PieChart>
+          </ResponsiveContainer>
+        </div>
+        <div className="flex gap-4 mt-2 text-xs">
+          {pieData.map(entry => (
+            <div key={entry.name} className="flex items-center gap-1.5">
+              <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: COLORS[entry.severity] }} />
+              <span className="text-[#aaa]">{entry.name} ({entry.value})</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Bar Chart */}
+      <div className="bg-[#0d0d0d] border border-white/10 rounded-xl p-4 flex flex-col">
+        <h3 className="text-sm font-medium text-[#888] mb-4">Vulnerability Types</h3>
+        <div className="w-full h-[220px]">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={barData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+              <XAxis dataKey="name" tick={{ fill: '#666', fontSize: 10 }} tickLine={false} axisLine={false} />
+              <YAxis allowDecimals={false} tick={{ fill: '#666', fontSize: 10 }} tickLine={false} axisLine={false} />
+              <Tooltip 
+                cursor={{ fill: '#ffffff0a' }}
+                contentStyle={{ backgroundColor: '#111', borderColor: '#333', borderRadius: '8px' }}
+              />
+              <Bar dataKey="count" fill="#a855f7" radius={[4, 4, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function FindingsView({ scanState, onNewScan }) {
+  const findings = scanState.findings || [];
+
+  const SEVERITY_ORDER = { critical: 0, high: 1, medium: 2, low: 3 };
+  const sortedFindings = [...findings].sort(
+    (a, b) => SEVERITY_ORDER[a.severity] - SEVERITY_ORDER[b.severity]
+  );
+
+  return (
+    <div className="w-full max-w-3xl text-left px-4">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h2 className="text-xl font-medium text-white flex items-center gap-2">
+            {findings.length > 0 ? (
+              <>
+                <AlertTriangle size={20} className="text-amber-400" />
+                Scan Results
+              </>
+            ) : (
+              <>
+                <Shield size={20} className="text-green-400" />
+                Scan Results
+              </>
+            )}
+          </h2>
+          <p className="text-sm text-[#888] mt-1">{scanState.message}</p>
+        </div>
+        <button
+          onClick={onNewScan}
+          className="flex items-center gap-2 px-4 py-2 text-sm bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-white transition-all"
+        >
+          <RotateCcw size={14} />
+          New Scan
+        </button>
+      </div>
+
+      <AnalyticsDashboard findings={findings} />
+
+      {/* Findings list or clean message */}
+      {findings.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-16 bg-[#0d0d0d] border border-white/10 rounded-2xl">
+          <div className="w-16 h-16 bg-green-500/10 rounded-full flex items-center justify-center mb-4 border border-green-500/20">
+            <CheckCircle size={32} className="text-green-400" />
+          </div>
+          <h3 className="text-lg font-medium text-white mb-2">All Clear</h3>
+          <p className="text-sm text-[#888] max-w-md text-center">
+            No vulnerabilities found in the patterns currently checked for.
+          </p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {sortedFindings.map((finding, idx) => (
+            <FindingCard key={finding.id || idx} finding={finding} index={idx} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function Dashboard() {
   const { data: session, status } = useSession();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const fileInputRef = React.useRef(null);
   const router = useRouter();
+  const { getEngine, loadState } = useLocalAi();
 
   // ONE state value that can only ever be one thing at a time:
   // { status: 'idle' } | { status: 'loading' } |
@@ -47,7 +278,7 @@ export default function Dashboard() {
   const [scanState, setScanState] = useState({ status: "idle" });
   const [githubModalOpen, setGithubModalOpen] = useState(false);
   const [repoUrl, setRepoUrl] = useState("");
-  const isLoading = scanState.status === "loading" || scanState.status === "filtering";
+  const isLoading = ["loading", "filtering", "loading-ai", "enriching"].includes(scanState.status);
 
   const handleGithubImport = async () => {
     if (!repoUrl.trim()) return;
@@ -84,9 +315,16 @@ export default function Dashboard() {
       if (!response.ok) {
         setScanState({ status: "error", message: data.error || "GitHub import failed" });
       } else {
+        const rawFindings = data.findings || [];
+        if (rawFindings.length === 0) {
+          setScanState({ status: "success", findings: [], message: `Scan complete. Found 0 potential issue(s) in ${data.fileCount} files.` });
+          return;
+        }
+
         setScanState({
           status: "success",
-          message: `Success! Read ${data.fileCount} files from ${repoUrl.trim()}.`,
+          message: `Scan complete. Found ${rawFindings.length} potential issue(s) in ${data.fileCount} files.`,
+          findings: rawFindings,
         });
       }
     } catch (error) {
@@ -201,9 +439,16 @@ export default function Dashboard() {
       if (!response.ok) {
         setScanState({ status: "error", message: data.error || "Upload failed" });
       } else {
+        const rawFindings = data.findings || [];
+        if (rawFindings.length === 0) {
+          setScanState({ status: "success", findings: [], message: `Scan complete. Found 0 potential issue(s) in ${data.fileCount} files.` });
+          return;
+        }
+
         setScanState({
           status: "success",
-          message: `Success! Read ${data.fileCount} files.`,
+          message: `Scan complete. Found ${rawFindings.length} potential issue(s) in ${data.fileCount} files.`,
+          findings: rawFindings,
         });
       }
     } catch (error) {
@@ -316,7 +561,7 @@ export default function Dashboard() {
           </div>
         )}
 
-        <div className="flex-1 flex flex-col items-center justify-center p-4 md:p-8 relative overflow-hidden">
+        <div className={`flex-1 flex flex-col items-center ${scanState.status === 'success' ? 'justify-start overflow-y-auto' : 'justify-center overflow-hidden'} p-4 md:p-8 relative`}>
 
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] pointer-events-none opacity-20">
             <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-neon-purple rounded-full blur-[120px]" />
@@ -327,13 +572,38 @@ export default function Dashboard() {
 
             {isLoading ? (
               <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
-                <KineticTextLoader />
+                {scanState.status === "loading" && (
+                  <KineticTextLoader />
+                )}
+                
                 {scanState.status === "filtering" && (
-                  <p className="text-sm text-[#666]">
-                    Processing {scanState.processed.toLocaleString()} / {scanState.total.toLocaleString()} files…
-                  </p>
+                  <>
+                    <KineticTextLoader />
+                    <p className="text-sm text-[#666]">
+                      Processing {scanState.processed.toLocaleString()} / {scanState.total.toLocaleString()} files…
+                    </p>
+                  </>
+                )}
+                
+                {scanState.status === "enriching" && (
+                  <>
+                    <KineticTextLoader />
+                    {loadState.status === "loading" ? (
+                      <p className="text-sm text-[#666]">
+                        {loadState.progressText || "Loading local AI model…"}
+                        {typeof loadState.progress === "number" &&
+                          ` (${Math.round(loadState.progress * 100)}%)`}
+                      </p>
+                    ) : (
+                      <p className="text-sm text-[#666]">
+                        Analyzing finding {scanState.processed} / {scanState.total}…
+                      </p>
+                    )}
+                  </>
                 )}
               </div>
+            ) : scanState.status === "success" ? (
+              <FindingsView scanState={scanState} onNewScan={() => setScanState({ status: "idle" })} />
             ) : (
               <>
                 <h1 className="text-2xl md:text-3xl font-light text-white mb-4 tracking-wide px-4">What would you like to build today?</h1>
@@ -344,11 +614,6 @@ export default function Dashboard() {
                   For large projects, your browser may ask you to confirm the upload before scanning begins — this is normal.
                 </p>
 
-                {scanState.status === "success" && (
-                  <div className="mb-6 px-4 py-2 rounded-lg text-sm w-full max-w-2xl text-center bg-green-500/10 text-green-400 border border-green-500/20">
-                    {scanState.message}
-                  </div>
-                )}
                 {scanState.status === "error" && (
                   <div className="mb-6 px-4 py-2 rounded-lg text-sm w-full max-w-2xl text-center bg-red-500/10 text-red-400 border border-red-500/20">
                     {scanState.message}
