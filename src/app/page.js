@@ -35,7 +35,7 @@ export default function Home() {
             <a href="#" className="px-5 py-2 text-sm text-white/70 no-underline rounded-full transition-colors duration-200 font-normal whitespace-nowrap hover:text-white hover:bg-white/5">How it works</a>
             <a href="#" className="px-5 py-2 text-sm text-white/70 no-underline rounded-full transition-colors duration-200 font-normal whitespace-nowrap hover:text-white hover:bg-white/5">About</a>
             <a href="#" className="px-5 py-2 text-sm text-white/70 no-underline rounded-full transition-colors duration-200 font-normal whitespace-nowrap hover:text-white hover:bg-white/5">Resources</a>
-            <a href="#" className="px-6 py-2 text-sm text-white bg-white/10 font-medium rounded-full ml-1 transition-all duration-200 hover:bg-white/20 whitespace-nowrap">Get started</a>
+            <a href="/login" className="px-6 py-2 text-sm text-white bg-white/10 font-medium rounded-full ml-1 transition-all duration-200 hover:bg-white/20 whitespace-nowrap">Get started</a>
           </div>
         </nav>
 
@@ -54,7 +54,7 @@ export default function Home() {
               spreadsheets — just answers, instantly.
             </p>
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
-              <a href="#" className="px-6 py-3 text-sm font-medium text-white bg-transparent border border-white/30 rounded-full cursor-pointer transition-all duration-300 no-underline hover:bg-white/10 hover:border-white/50">Get started</a>
+              <a href="/login" className="px-6 py-3 text-sm font-medium text-white bg-transparent border border-white/30 rounded-full cursor-pointer transition-all duration-300 no-underline hover:bg-white/10 hover:border-white/50">Get started</a>
               <a href="#" className="px-6 py-3 text-sm font-medium text-white bg-white/10 border border-white/10 rounded-full cursor-pointer transition-all duration-300 no-underline hover:bg-white/15 hover:border-white/20">See how it works</a>
             </div>
           </div>

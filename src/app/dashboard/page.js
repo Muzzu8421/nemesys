@@ -572,10 +572,7 @@ export default function Dashboard() {
 
             {isLoading ? (
               <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
-                {scanState.status === "loading" && (
-                  <KineticTextLoader />
-                )}
-                
+                <KineticTextLoader />
                 {scanState.status === "filtering" && (
                   <>
                     <KineticTextLoader />
