@@ -12,7 +12,7 @@
 //     weak crypto, insecure cookie) -> 2 actors, 1 arrow.
 // Same component handles both; no special-casing needed.
 
-import React, { useEffect, useMemo, useRef, useState, useCallback } from "react";
+import React, { useEffect, useRef, useState, useCallback } from "react";
 import {
   VenetianMask,
   Code2,
@@ -28,8 +28,6 @@ import {
   Cookie,
   AlertTriangle,
 } from "lucide-react";
-import { useLocalAi } from "./local-ai-provider";
-import { getAttackSteps } from "@/core/ai/templates";
 
 const STEP_DURATION_MS = 2200;
 
@@ -60,23 +58,30 @@ function normalizeType(type) {
   return (type || "").toLowerCase().replace(/[()]/g, "").trim().replace(/\s+/g, "-");
 }
 
-export default function AttackSimulationView({ finding }) {
-  const { source: aiSource, byokConfig, explainStep } = useLocalAi();
-  const baseSteps = useMemo(() => getAttackSteps(finding), [finding]);
+function buildStepsFromPath(finding) {
+  return (finding.path || []).map((node) => ({
+    role: node.type === "source" ? "source" : "sink",
+    line: node.line,
+    file: node.file,
+    snippet: node.snippet,
+    text:
+      node.type === "source"
+        ? `Tainted data enters here through ${node.snippet}`
+        : `Data reaches ${node.snippet} — a sensitive operation`,
+  }));
+}
 
-  const [steps, setSteps] = useState(baseSteps);
+export default function AttackSimulationView({ finding }) {
+  const [steps, setSteps] = useState(() => buildStepsFromPath(finding));
   const [currentIndex, setCurrentIndex] = useState(0);
   const [playing, setPlaying] = useState(false);
-  const [enriching, setEnriching] = useState(false);
   const timerRef = useRef(null);
 
-  const canEnrich = aiSource === "ollama" || !!byokConfig;
-
   useEffect(() => {
-    setSteps(baseSteps);
+    setSteps(buildStepsFromPath(finding));
     setCurrentIndex(0);
     setPlaying(false);
-  }, [baseSteps]);
+  }, [finding]);
 
   useEffect(() => {
     if (!playing) return;
@@ -102,24 +107,6 @@ export default function AttackSimulationView({ finding }) {
     setCurrentIndex(i);
   }, []);
 
-  const enrichWithAi = useCallback(async () => {
-    if (!canEnrich || enriching) return;
-    setEnriching(true);
-    const preferByok = aiSource !== "ollama" && !!byokConfig;
-    const next = [...baseSteps];
-    for (let i = 0; i < next.length; i++) {
-      try {
-        const enriched = await explainStep(finding, i, { preferByok });
-        if (enriched) {
-          next[i] = enriched;
-          setSteps([...next]);
-        }
-      } catch {
-        // leave template text for this step
-      }
-    }
-    setEnriching(false);
-  }, [canEnrich, enriching, aiSource, byokConfig, baseSteps, explainStep, finding]);
 
   if (!steps.length) return null;
 
@@ -148,15 +135,6 @@ export default function AttackSimulationView({ finding }) {
       <div className="flex items-center justify-between mb-6">
         <h3 className="text-sm font-semibold text-white/90 tracking-wide">Attack Simulation</h3>
         <div className="flex items-center gap-2">
-          {canEnrich && (
-            <button
-              onClick={enrichWithAi}
-              disabled={enriching}
-              className="text-xs px-2.5 py-1 rounded-md border border-violet-400/30 text-violet-300 hover:bg-violet-400/10 disabled:opacity-50 transition-colors"
-            >
-              {enriching ? "Enriching…" : "Enrich with AI"}
-            </button>
-          )}
           <button
             onClick={playing ? pause : play}
             className="text-xs px-3 py-1 rounded-md border border-cyan-400/30 text-cyan-300 hover:bg-cyan-400/10 transition-colors"

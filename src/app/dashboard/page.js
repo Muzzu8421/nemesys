@@ -1,12 +1,11 @@
 "use client"
 import React, { useState } from 'react';
 import { signOut, useSession } from 'next-auth/react';
-import { MessageSquare, Plus, Upload, LogOut, Search, ChevronLeft, Menu, Shield, ShieldAlert, ChevronDown, ChevronRight, RotateCcw, AlertTriangle, CheckCircle, FileCode, ArrowRight } from 'lucide-react';
+import { MessageSquare, Plus, Upload, LogOut, Search, ChevronLeft, Menu, Shield, ShieldAlert, ChevronDown, ChevronRight, RotateCcw, AlertTriangle, CheckCircle, FileCode, ArrowRight, Loader2, Sparkles, RotateCw } from 'lucide-react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, BarChart, Bar, XAxis, YAxis } from 'recharts';
 import { KineticTextLoader } from "@/components/ui/kinetic-text-loader";
-import { useLocalAi } from "@/components/local-ai-provider";
 import AttackSimulationView from "@/components/AttackSimulationView";
 
 const IGNORED_PATTERNS = [
@@ -43,14 +42,41 @@ const severityColors = {
 
 function FindingCard({ finding, index }) {
   const [expanded, setExpanded] = React.useState(index === 0);
-  const { explain } = useLocalAi();
   const [explanation, setExplanation] = useState(null);
+  const [isExplaining, setIsExplaining] = useState(false);
+  const [explainError, setExplainError] = useState(null);
+  const fetchedRef = React.useRef(false);
 
   React.useEffect(() => {
-    if (expanded && !explanation) {
-      explain(finding).then(res => setExplanation(res.text));
+    if (expanded && !explanation && !isExplaining && !explainError && !fetchedRef.current) {
+      fetchedRef.current = true;
+      setIsExplaining(true);
+      fetch('/api/explain', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(finding),
+      })
+        .then(res => res.json())
+        .then(data => {
+          if (data.error) {
+            setExplainError(data.error);
+          } else {
+            setExplanation(data.explanation);
+          }
+        })
+        .catch(err => {
+          setExplainError('Failed to connect to AI service: ' + err.message);
+        })
+        .finally(() => {
+          setIsExplaining(false);
+        });
     }
-  }, [expanded, explanation, finding, explain]);
+  }, [expanded, explanation, isExplaining, explainError, finding]);
+
+  const retry = () => {
+    setExplainError(null);
+    fetchedRef.current = false;
+  };
 
   return (
     <div className="bg-[#0d0d0d] border border-white/10 rounded-xl overflow-hidden transition-all duration-300 hover:border-amber-500/30">
@@ -79,10 +105,31 @@ function FindingCard({ finding, index }) {
         <div className="px-5 pb-5 border-t border-white/5">
           <div className="mt-4 mb-6 space-y-4">
             <div>
-              <h4 className="text-xs font-semibold text-[#888] uppercase tracking-wider mb-1">Explanation</h4>
-              <p className="text-sm text-[#aaa] mt-2">
-                {explanation || "Loading explanation..."}
-              </p>
+              <div className="flex items-center gap-2 mb-2">
+                <Sparkles size={14} className="text-violet-400" />
+                <h4 className="text-xs font-semibold text-[#888] uppercase tracking-wider">AI Explanation</h4>
+              </div>
+              {isExplaining ? (
+                <div className="flex items-center gap-2.5 py-3 px-3 rounded-lg bg-violet-500/5 border border-violet-500/10">
+                  <Loader2 size={14} className="animate-spin text-violet-400" />
+                  <span className="text-sm text-[#888]">Analyzing with AI…</span>
+                </div>
+              ) : explainError ? (
+                <div className="flex items-center gap-2 py-3 px-3 rounded-lg bg-red-500/5 border border-red-500/10">
+                  <span className="text-sm text-red-400 flex-1">{explainError}</span>
+                  <button
+                    onClick={retry}
+                    className="flex items-center gap-1 text-xs text-[#888] hover:text-white transition-colors"
+                  >
+                    <RotateCw size={12} />
+                    Retry
+                  </button>
+                </div>
+              ) : explanation ? (
+                <p className="text-sm text-[#aaa] mt-1 leading-relaxed whitespace-pre-wrap">
+                  {explanation}
+                </p>
+              ) : null}
             </div>
             
             {finding.attacker_payload && (
@@ -264,7 +311,6 @@ export default function Dashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const fileInputRef = React.useRef(null);
   const router = useRouter();
-  const { getEngine, loadState } = useLocalAi();
 
   // ONE state value that can only ever be one thing at a time:
   // { status: 'idle' } | { status: 'loading' } |
@@ -581,23 +627,7 @@ export default function Dashboard() {
                     </p>
                   </>
                 )}
-                
-                {scanState.status === "enriching" && (
-                  <>
-                    <KineticTextLoader />
-                    {loadState.status === "loading" ? (
-                      <p className="text-sm text-[#666]">
-                        {loadState.progressText || "Loading local AI model…"}
-                        {typeof loadState.progress === "number" &&
-                          ` (${Math.round(loadState.progress * 100)}%)`}
-                      </p>
-                    ) : (
-                      <p className="text-sm text-[#666]">
-                        Analyzing finding {scanState.processed} / {scanState.total}…
-                      </p>
-                    )}
-                  </>
-                )}
+
               </div>
             ) : scanState.status === "success" ? (
               <FindingsView scanState={scanState} onNewScan={() => setScanState({ status: "idle" })} />
