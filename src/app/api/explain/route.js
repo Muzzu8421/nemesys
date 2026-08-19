@@ -143,26 +143,40 @@ function parseSSEResponse(sseText) {
   try {
     const parsed = JSON.parse(lastData);
 
-    // Gradio returns [content, chatHistory]. Extract content.
-    const content = Array.isArray(parsed) ? parsed[0] : parsed;
-
-    // content can be a plain string…
-    if (typeof content === "string") return content.trim();
-
-    // …or a list of {type, text} parts
-    if (Array.isArray(content)) {
-      return content
-        .map((part) => (typeof part === "string" ? part : part?.text || ""))
-        .join("")
-        .trim();
+    // Gradio ChatInterface returns [updated_textbox, chat_history]
+    // The history is an array of messages: [{role: "user", content: ...}, {role: "assistant", content: ...}]
+    const chatHistory = Array.isArray(parsed) && Array.isArray(parsed[1]) ? parsed[1] : null;
+    
+    if (chatHistory && chatHistory.length > 0) {
+      // Find the last assistant message
+      const lastAssistantMsg = [...chatHistory].reverse().find(msg => msg.role === "assistant");
+      if (lastAssistantMsg && lastAssistantMsg.content) {
+        const content = lastAssistantMsg.content;
+        
+        // Handle string content
+        if (typeof content === "string") return content.trim();
+        
+        // Handle array of parts [{type: "text", text: "..."}]
+        if (Array.isArray(content)) {
+          return content
+            .map(part => typeof part === "string" ? part : (part?.text || ""))
+            .join("")
+            .trim();
+        }
+      }
     }
 
-    // …or a single {type, text} object
+    // Fallback parsing just in case it returns the raw string differently
+    const content = Array.isArray(parsed) ? parsed[0] : parsed;
+    if (typeof content === "string" && content.trim() !== "") return content.trim();
+    if (Array.isArray(content)) {
+      return content.map((part) => (typeof part === "string" ? part : part?.text || "")).join("").trim();
+    }
     if (content && typeof content === "object" && content.text) {
       return content.text.trim();
     }
 
-    return String(content).trim();
+    return null;
   } catch {
     // If it's not valid JSON, treat the raw text as the response
     return lastData.trim() || null;
