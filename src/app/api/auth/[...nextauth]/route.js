@@ -88,6 +88,7 @@ const authoptions = {
             session.user.name = dbUser.username;
             session.user.fullname = dbUser.fullname;
             session.user.image = dbUser.profilePicture || session.user.image;
+            session.user.id = dbUser._id.toString();
             return session;
         },
     },
@@ -96,4 +97,5 @@ const authoptions = {
 
 const handler = NextAuth(authoptions);
 
+export const authOptions = authoptions;
 export { handler as GET, handler as POST };

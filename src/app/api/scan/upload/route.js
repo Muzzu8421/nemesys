@@ -1,5 +1,10 @@
 import { parseFiles } from "../../../../core/parser";
 import { analyzeFiles } from "../../../../core/taint-analysis";
+import { connectToDatabase } from "@/lib/mongodb";
+import Conversation from "@/models/Conversation";
+import Finding from "@/models/Finding";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
 const IGNORED_PATTERNS = [
   "node_modules/",
@@ -26,6 +31,13 @@ function isSupportedExtension(filePath) {
 
 export async function POST(request) {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return Response.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    
+    await connectToDatabase();
+
     const formData = await request.formData();
     const uploadedFiles = formData.getAll("files");
 
@@ -81,12 +93,43 @@ export async function POST(request) {
       sourceCode: contentByPath.get(p.filePath),
     }));
 
-    const findings = analyzeFiles(analysisInput);
+    const rawFindings = analyzeFiles(analysisInput);
+
+    const conversation = await Conversation.create({
+      userId: session.user.id,
+      title: `Local upload scan`,
+      type: "scan",
+      scanMeta: {
+        source: "upload",
+        fileCount: collectedFiles.length,
+        findingsCount: rawFindings.length,
+      }
+    });
+
+    const dbFindings = await Finding.insertMany(
+      rawFindings.map(f => ({
+        conversationId: conversation._id,
+        vulnerabilityType: f.vulnerability_type || f.vulnerabilityType,
+        severity: f.severity,
+        file: f.file || ((f.path || []).find(p => p.type === 'sink') || (f.path || [])[0])?.file,
+        line: f.line || ((f.path || []).find(p => p.type === 'sink') || (f.path || [])[0])?.line,
+        path: f.path,
+        attackerPayload: f.attacker_payload,
+        fixSuggestion: f.fix_suggestion,
+      }))
+    );
+
+    const mergedFindings = rawFindings.map((f, i) => ({
+      ...f,
+      _id: dbFindings[i]._id.toString(),
+      conversationId: conversation._id.toString()
+    }));
 
     return Response.json({
       message: "Scan complete.",
       fileCount: collectedFiles.length,
-      findings,
+      conversationId: conversation._id.toString(),
+      findings: mergedFindings,
     });
   } catch (error) {
     console.error("Error in /api/scan/upload:", error);

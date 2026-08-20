@@ -3,10 +3,11 @@ import React, { useState } from 'react';
 import { signOut, useSession } from 'next-auth/react';
 import { MessageSquare, Plus, Upload, LogOut, Search, ChevronLeft, Menu, Shield, ShieldAlert, ChevronDown, ChevronRight, RotateCcw, AlertTriangle, CheckCircle, FileCode, ArrowRight, Loader2, Sparkles, RotateCw } from 'lucide-react';
 import Image from 'next/image';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 import { KineticTextLoader } from "@/components/ui/kinetic-text-loader";
 import AttackSimulationView from "@/components/AttackSimulationView";
+import { useConversations } from "@/hooks/useConversations";
 
 const IGNORED_PATTERNS = [
   "node_modules/",
@@ -81,12 +82,12 @@ function FindingDetail({ finding }) {
     <div className="space-y-4">
       <div>
         <div className="flex items-center gap-2 mb-2">
-          <Sparkles size={14} className="text-violet-400" />
+          <Sparkles size={14} className="text-white" />
           <h4 className="text-xs font-semibold text-[#888] uppercase tracking-wider">AI Explanation</h4>
         </div>
         {isExplaining ? (
           <div className="flex items-center gap-2.5 py-3 px-3 rounded-lg bg-violet-500/5 border border-violet-500/10">
-            <Loader2 size={14} className="animate-spin text-violet-400" />
+            <Loader2 size={14} className="animate-spin text-white" />
             <span className="text-sm text-[#888]">Analyzing with AI…</span>
           </div>
         ) : explainError ? (
@@ -453,6 +454,8 @@ export default function Dashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const fileInputRef = React.useRef(null);
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const conversationId = searchParams.get('id');
 
   // ONE state value that can only ever be one thing at a time:
   // { status: 'idle' } | { status: 'loading' } |
@@ -464,6 +467,34 @@ export default function Dashboard() {
   // Collapsing both into one value makes that class of bug impossible —
   // there is only ever one true state to render.
   const [scanState, setScanState] = useState({ status: "idle" });
+
+  React.useEffect(() => {
+    if (conversationId) {
+      setScanState({ status: "loading" });
+      fetch(`/api/conversations/${conversationId}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.error) {
+            setScanState({ status: "error", message: data.error });
+          } else if (data.conversation?.type === "scan") {
+            setScanState({
+              status: "success",
+              message: `Scan complete. Found ${data.findings?.length || 0} potential issue(s).`,
+              findings: data.findings || [],
+            });
+          } else {
+            // For future chat implementation
+            setScanState({ status: "idle" });
+          }
+        })
+        .catch(err => {
+          setScanState({ status: "error", message: "Failed to load conversation." });
+        });
+    } else {
+      setScanState({ status: "idle" });
+    }
+  }, [conversationId]);
+
   const [githubModalOpen, setGithubModalOpen] = useState(false);
   const [repoUrl, setRepoUrl] = useState("");
   const isLoading = ["loading", "filtering", "loading-ai", "enriching"].includes(scanState.status);
@@ -503,17 +534,17 @@ export default function Dashboard() {
       if (!response.ok) {
         setScanState({ status: "error", message: data.error || "GitHub import failed" });
       } else {
-        const rawFindings = data.findings || [];
-        if (rawFindings.length === 0) {
-          setScanState({ status: "success", findings: [], message: `Scan complete. Found 0 potential issue(s) in ${data.fileCount} files.` });
-          return;
+        if (data.conversationId) {
+          refresh();
+          router.push(`/dashboard?id=${data.conversationId}`);
+        } else {
+          const rawFindings = data.findings || [];
+          setScanState({
+            status: "success",
+            message: `Scan complete. Found ${rawFindings.length} potential issue(s) in ${data.fileCount} files.`,
+            findings: rawFindings,
+          });
         }
-
-        setScanState({
-          status: "success",
-          message: `Scan complete. Found ${rawFindings.length} potential issue(s) in ${data.fileCount} files.`,
-          findings: rawFindings,
-        });
       }
     } catch (error) {
       console.error(error);
@@ -627,17 +658,17 @@ export default function Dashboard() {
       if (!response.ok) {
         setScanState({ status: "error", message: data.error || "Upload failed" });
       } else {
-        const rawFindings = data.findings || [];
-        if (rawFindings.length === 0) {
-          setScanState({ status: "success", findings: [], message: `Scan complete. Found 0 potential issue(s) in ${data.fileCount} files.` });
-          return;
+        if (data.conversationId) {
+          refresh();
+          router.push(`/dashboard?id=${data.conversationId}`);
+        } else {
+          const rawFindings = data.findings || [];
+          setScanState({
+            status: "success",
+            message: `Scan complete. Found ${rawFindings.length} potential issue(s) in ${data.fileCount} files.`,
+            findings: rawFindings,
+          });
         }
-
-        setScanState({
-          status: "success",
-          message: `Scan complete. Found ${rawFindings.length} potential issue(s) in ${data.fileCount} files.`,
-          findings: rawFindings,
-        });
       }
     } catch (error) {
       console.error(error);
@@ -660,11 +691,20 @@ export default function Dashboard() {
     }
   }, [status, router]);
 
-  const chats = [
-    { id: 1, title: 'Fix login page layout', date: 'Just now' },
-    { id: 2, title: 'Analyze GitHub repo', date: '2 hrs ago' },
-    { id: 3, title: 'Update deployment scripts', date: 'Yesterday' },
-  ];
+  const { conversations, refresh } = useConversations();
+
+  const getRelativeTime = (dateStr) => {
+    if (!dateStr) return '';
+    const diff = Date.now() - new Date(dateStr).getTime();
+    const minutes = Math.floor(diff / 60000);
+    if (minutes < 1) return 'Just now';
+    if (minutes < 60) return `${minutes} min ago`;
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `${hours} hr${hours > 1 ? 's' : ''} ago`;
+    const days = Math.floor(hours / 24);
+    if (days === 1) return 'Yesterday';
+    return `${days} days ago`;
+  };
 
   return (
     <div className="flex h-screen w-full bg-[#0a0a0a] text-[#e0e0e0] font-sans overflow-hidden relative">
@@ -689,7 +729,7 @@ export default function Dashboard() {
         </div>
 
         <div className="p-4">
-          <button className="w-full flex items-center gap-2 px-4 py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-sm text-white transition-all shadow-sm group">
+          <button onClick={() => { setScanState({ status: "idle" }); router.push('/dashboard'); }} className="w-full flex items-center gap-2 px-4 py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-sm text-white transition-all shadow-sm group">
             <Plus size={16} className="text-[#aaa] group-hover:text-white transition-colors" />
             <span>New Conversation</span>
           </button>
@@ -708,11 +748,12 @@ export default function Dashboard() {
 
         <div className="flex-1 overflow-y-auto px-2 space-y-[2px]">
           <div className="px-3 pb-2 pt-1 text-[10px] font-bold text-[#555] uppercase tracking-widest">Recent</div>
-          {chats.map(chat => (
-            <div key={chat.id} className="group flex items-center gap-3 px-3 py-2 rounded-md hover:bg-white/5 cursor-pointer transition-colors">
+          {conversations.map(chat => (
+            <div key={chat._id} onClick={() => router.push(`/dashboard?id=${chat._id}`)} className="group flex items-center gap-3 px-3 py-2 rounded-md hover:bg-white/5 cursor-pointer transition-colors">
               <MessageSquare size={14} className="text-[#666] group-hover:text-white transition-colors" />
-              <div className="flex-1 min-w-0">
+              <div className="flex-1 min-w-0 flex justify-between items-center">
                 <div className="text-sm text-[#aaa] group-hover:text-white truncate transition-colors">{chat.title}</div>
+                <div className="text-[10px] text-[#555] whitespace-nowrap ml-2">{getRelativeTime(chat.lastMessageAt || chat.updatedAt)}</div>
               </div>
             </div>
           ))}
@@ -776,10 +817,10 @@ export default function Dashboard() {
             ) : (
               <>
                 <h1 className="text-2xl md:text-3xl font-light text-white mb-4 tracking-wide px-4">What would you like to build today?</h1>
-                <p className="text-[#888] text-sm md:text-base mb-2 max-w-2xl font-light px-4">
+                <p className="text-[#fffefe] text-sm md:text-base mb-2 max-w-2xl font-light px-4">
                   Start a new session by importing your existing project from GitHub or uploading a folder directly to the Antigravity console.
                 </p>
-                <p className="text-[#555] text-xs mb-8 max-w-2xl px-4">
+                <p className="text-[#fefefe] text-xs mb-8 max-w-2xl px-4">
                   For large projects, your browser may ask you to confirm the upload before scanning begins — this is normal.
                 </p>
 

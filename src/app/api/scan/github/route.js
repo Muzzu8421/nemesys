@@ -1,5 +1,10 @@
 import { parseFiles } from "../../../../core/parser";
 import { analyzeFiles } from "../../../../core/taint-analysis";
+import { connectToDatabase } from "@/lib/mongodb";
+import Conversation from "@/models/Conversation";
+import Finding from "@/models/Finding";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
 const IGNORED_PATTERNS = [
   "node_modules/",
@@ -103,6 +108,13 @@ async function fetchFilesInBatches(files, owner, repo, defaultBranch, concurrenc
 
 export async function POST(request) {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return Response.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    
+    await connectToDatabase();
+
     const { repoUrl } = await request.json();
 
     if (!repoUrl) {
@@ -207,12 +219,46 @@ export async function POST(request) {
       sourceCode: contentByPath.get(p.filePath),
     }));
 
-    const findings = analyzeFiles(analysisInput);
+    const rawFindings = analyzeFiles(analysisInput);
+
+    const conversation = await Conversation.create({
+      userId: session.user.id,
+      title: `${owner}/${repo} scan`,
+      type: "scan",
+      scanMeta: {
+        source: "github",
+        repoUrl,
+        fileCount: successfulFiles.length,
+        findingsCount: rawFindings.length,
+      }
+    });
+
+    const dbFindings = await Finding.insertMany(
+      rawFindings.map(f => ({
+        conversationId: conversation._id,
+        vulnerabilityType: f.vulnerability_type || f.vulnerabilityType,
+        severity: f.severity,
+        file: f.file || ((f.path || []).find(p => p.type === 'sink') || (f.path || [])[0])?.file,
+        line: f.line || ((f.path || []).find(p => p.type === 'sink') || (f.path || [])[0])?.line,
+        path: f.path,
+        attackerPayload: f.attacker_payload,
+        fixSuggestion: f.fix_suggestion,
+      }))
+    );
+
+    // Mongoose insertMany returns mongoose documents, but the frontend expects the original JSON keys
+    // For compatibility with the frontend, return the findings as they were formatted before, but with the _id from the db
+    const mergedFindings = rawFindings.map((f, i) => ({
+      ...f,
+      _id: dbFindings[i]._id.toString(),
+      conversationId: conversation._id.toString()
+    }));
 
     return Response.json({
       message: "Scan complete.",
       fileCount: successfulFiles.length,
-      findings,
+      conversationId: conversation._id.toString(),
+      findings: mergedFindings,
     });
   } catch (error) {
     console.error("Error in /api/scan/github:", error);

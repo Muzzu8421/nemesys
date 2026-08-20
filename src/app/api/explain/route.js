@@ -20,6 +20,20 @@ export async function POST(request) {
     return NextResponse.json({ error: "Invalid request body." }, { status: 400 });
   }
 
+  if (finding._id) {
+    try {
+      const { connectToDatabase } = require("@/lib/mongodb");
+      const Finding = require("@/models/Finding").default;
+      await connectToDatabase();
+      const dbFinding = await Finding.findById(finding._id);
+      if (dbFinding && dbFinding.aiExplanation) {
+        return NextResponse.json({ explanation: dbFinding.aiExplanation });
+      }
+    } catch (e) {
+      console.warn("Failed to check finding cache:", e);
+    }
+  }
+
   const prompt = buildPrompt(finding);
 
   try {
@@ -79,6 +93,20 @@ export async function POST(request) {
         { error: "Failed to parse AI response — the model may not have returned usable output." },
         { status: 502 }
       );
+    }
+
+    if (finding._id) {
+      try {
+        const { connectToDatabase } = require("@/lib/mongodb");
+        const Finding = require("@/models/Finding").default;
+        await connectToDatabase();
+        await Finding.findByIdAndUpdate(finding._id, {
+          aiExplanation: explanation,
+          explainedAt: new Date()
+        });
+      } catch (e) {
+        console.warn("Failed to update finding cache:", e);
+      }
     }
 
     return NextResponse.json({ explanation });
