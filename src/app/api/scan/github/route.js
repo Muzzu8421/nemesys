@@ -15,6 +15,32 @@ const IGNORED_PATTERNS = [
 const SUPPORTED_EXTENSIONS = [".js", ".jsx", ".ts", ".tsx", ".py"];
 const MAX_FILE_SIZE_BYTES = 500 * 1024;
 
+// --- Raw-content fetch tuning ---
+// GitHub's raw.githubusercontent.com CDN will reset connections
+// (ECONNRESET) under a sudden burst of many simultaneous requests from
+// one IP. Fetching in small batches, with a timeout + retry per file,
+// turns that from "one reset 500s the whole scan" into "a transient
+// hiccup that gets retried, and a handful of stubborn files just get
+// skipped instead of failing everything."
+const FETCH_CONCURRENCY = 8;
+const MAX_RETRIES = 2;
+const RETRY_DELAY_MS = 500;
+const FETCH_TIMEOUT_MS = 10_000;
+
+// Optional — if set, used to authenticate GitHub API calls (not the raw
+// CDN, which doesn't use this). Unauthenticated requests to
+// api.github.com are capped at 60/hour per IP; authenticated jumps to
+// 5,000/hour. Read from env only — never hardcode a token here.
+const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
+
+function githubApiHeaders() {
+  const headers = { Accept: "application/vnd.github+json" };
+  if (GITHUB_TOKEN) {
+    headers.Authorization = `Bearer ${GITHUB_TOKEN}`;
+  }
+  return headers;
+}
+
 function isIgnored(filePath) {
   return IGNORED_PATTERNS.some((pattern) => filePath.includes(pattern));
 }
@@ -29,6 +55,50 @@ function parseGithubUrl(repoUrl) {
     .match(/^https:\/\/github\.com\/([\w.-]+)\/([\w.-]+)\/?$/);
   if (!match) return null;
   return { owner: match[1], repo: match[2] };
+}
+
+async function fetchFileWithRetry(rawUrl, item, attempt = 0) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+
+  try {
+    const res = await fetch(rawUrl, { signal: controller.signal });
+    if (!res.ok) return null;
+    const content = await res.text();
+    return { path: item.path, content, size: item.size };
+  } catch (err) {
+    const isRetryable =
+      err.cause?.code === "ECONNRESET" ||
+      err.cause?.code === "ETIMEDOUT" ||
+      err.name === "AbortError";
+
+    if (isRetryable && attempt < MAX_RETRIES) {
+      await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY_MS * (attempt + 1)));
+      return fetchFileWithRetry(rawUrl, item, attempt + 1);
+    }
+
+    console.warn(
+      `[scan/github] Failed to fetch ${item.path} after ${attempt + 1} attempt(s): ${err.message}`
+    );
+    return null; // isolate this file's failure — don't take down the whole scan
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+async function fetchFilesInBatches(files, owner, repo, defaultBranch, concurrency = FETCH_CONCURRENCY) {
+  const results = [];
+  for (let i = 0; i < files.length; i += concurrency) {
+    const batch = files.slice(i, i + concurrency);
+    const batchResults = await Promise.all(
+      batch.map((item) => {
+        const rawUrl = `https://raw.githubusercontent.com/${owner}/${repo}/${defaultBranch}/${item.path}`;
+        return fetchFileWithRetry(rawUrl, item);
+      })
+    );
+    results.push(...batchResults);
+  }
+  return results;
 }
 
 export async function POST(request) {
@@ -49,7 +119,7 @@ export async function POST(request) {
     const { owner, repo } = parsed;
 
     const repoInfoRes = await fetch(`https://api.github.com/repos/${owner}/${repo}`, {
-      headers: { Accept: "application/vnd.github+json" },
+      headers: githubApiHeaders(),
     });
 
     if (!repoInfoRes.ok) {
@@ -57,6 +127,16 @@ export async function POST(request) {
         return Response.json(
           { error: "Repository not found. Make sure it's public and the URL is correct." },
           { status: 404 }
+        );
+      }
+      if (repoInfoRes.status === 403) {
+        return Response.json(
+          {
+            error: GITHUB_TOKEN
+              ? "GitHub API rate limit exceeded. Please try again later."
+              : "GitHub API rate limit exceeded. Set a GITHUB_TOKEN environment variable to raise the limit.",
+          },
+          { status: 429 }
         );
       }
       return Response.json(
@@ -70,10 +150,20 @@ export async function POST(request) {
 
     const treeRes = await fetch(
       `https://api.github.com/repos/${owner}/${repo}/git/trees/${defaultBranch}?recursive=1`,
-      { headers: { Accept: "application/vnd.github+json" } }
+      { headers: githubApiHeaders() }
     );
 
     if (!treeRes.ok) {
+      if (treeRes.status === 403) {
+        return Response.json(
+          {
+            error: GITHUB_TOKEN
+              ? "GitHub API rate limit exceeded. Please try again later."
+              : "GitHub API rate limit exceeded. Set a GITHUB_TOKEN environment variable to raise the limit.",
+          },
+          { status: 429 }
+        );
+      }
       return Response.json(
         { error: "Failed to fetch repository file tree." },
         { status: 502 }
@@ -97,15 +187,7 @@ export async function POST(request) {
       );
     }
 
-    const collectedFiles = await Promise.all(
-      relevantFiles.map(async (item) => {
-        const rawUrl = `https://raw.githubusercontent.com/${owner}/${repo}/${defaultBranch}/${item.path}`;
-        const res = await fetch(rawUrl);
-        if (!res.ok) return null;
-        const content = await res.text();
-        return { path: item.path, content, size: item.size };
-      })
-    );
+    const collectedFiles = await fetchFilesInBatches(relevantFiles, owner, repo, defaultBranch);
 
     const successfulFiles = collectedFiles.filter(Boolean);
 
@@ -140,4 +222,3 @@ export async function POST(request) {
     );
   }
 }
-

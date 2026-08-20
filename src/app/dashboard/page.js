@@ -4,7 +4,7 @@ import { signOut, useSession } from 'next-auth/react';
 import { MessageSquare, Plus, Upload, LogOut, Search, ChevronLeft, Menu, Shield, ShieldAlert, ChevronDown, ChevronRight, RotateCcw, AlertTriangle, CheckCircle, FileCode, ArrowRight, Loader2, Sparkles, RotateCw } from 'lucide-react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, BarChart, Bar, XAxis, YAxis } from 'recharts';
+
 import { KineticTextLoader } from "@/components/ui/kinetic-text-loader";
 import AttackSimulationView from "@/components/AttackSimulationView";
 
@@ -40,15 +40,14 @@ const severityColors = {
   low: "bg-blue-500/10 text-blue-400 border-blue-500/20",
 };
 
-function FindingCard({ finding, index }) {
-  const [expanded, setExpanded] = React.useState(index === 0);
+function FindingDetail({ finding }) {
   const [explanation, setExplanation] = useState(null);
   const [isExplaining, setIsExplaining] = useState(false);
   const [explainError, setExplainError] = useState(null);
   const fetchedRef = React.useRef(false);
 
   React.useEffect(() => {
-    if (expanded && !explanation && !isExplaining && !explainError && !fetchedRef.current) {
+    if (!explanation && !isExplaining && !explainError && !fetchedRef.current) {
       fetchedRef.current = true;
       setIsExplaining(true);
       fetch('/api/explain', {
@@ -71,7 +70,7 @@ function FindingCard({ finding, index }) {
           setIsExplaining(false);
         });
     }
-  }, [expanded, explanation, isExplaining, explainError, finding]);
+  }, [explanation, isExplaining, explainError, finding]);
 
   const retry = () => {
     setExplainError(null);
@@ -79,84 +78,130 @@ function FindingCard({ finding, index }) {
   };
 
   return (
-    <div className="bg-[#0d0d0d] border border-white/10 rounded-xl overflow-hidden transition-all duration-300 hover:border-amber-500/30">
+    <div className="space-y-4">
+      <div>
+        <div className="flex items-center gap-2 mb-2">
+          <Sparkles size={14} className="text-violet-400" />
+          <h4 className="text-xs font-semibold text-[#888] uppercase tracking-wider">AI Explanation</h4>
+        </div>
+        {isExplaining ? (
+          <div className="flex items-center gap-2.5 py-3 px-3 rounded-lg bg-violet-500/5 border border-violet-500/10">
+            <Loader2 size={14} className="animate-spin text-violet-400" />
+            <span className="text-sm text-[#888]">Analyzing with AI…</span>
+          </div>
+        ) : explainError ? (
+          <div className="flex items-center gap-2 py-3 px-3 rounded-lg bg-red-500/5 border border-red-500/10">
+            <span className="text-sm text-red-400 flex-1">{explainError}</span>
+            <button
+              onClick={retry}
+              className="flex items-center gap-1 text-xs text-[#888] hover:text-white transition-colors"
+            >
+              <RotateCw size={12} />
+              Retry
+            </button>
+          </div>
+        ) : explanation ? (
+          <p className="text-sm text-[#aaa] mt-1 leading-relaxed whitespace-pre-wrap">
+            {explanation}
+          </p>
+        ) : null}
+      </div>
+      
+      {finding.attacker_payload && (
+        <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+          <div>
+            <div className="text-[#666] mb-1">Example attacker input</div>
+            <code className="block bg-black/40 rounded px-2 py-1 text-red-300 break-all whitespace-pre-wrap">
+              {finding.attacker_payload}
+            </code>
+          </div>
+          <div>
+            <div className="text-[#666] mb-1">Suggested fix</div>
+            <div className="text-green-300">{finding.fix_suggestion}</div>
+          </div>
+        </div>
+      )}
+
+      <AttackSimulationView finding={finding} />
+    </div>
+  );
+}
+
+function FindingGroup({ typeName, groupFindings }) {
+  const [expanded, setExpanded] = useState(true);
+  const [activeFindingIndex, setActiveFindingIndex] = useState(null);
+
+  const count = groupFindings.length;
+  
+  const SEVERITY_ORDER = { critical: 0, high: 1, medium: 2, low: 3 };
+  const worstSeverity = groupFindings.reduce((worst, f) => {
+    return SEVERITY_ORDER[f.severity] < SEVERITY_ORDER[worst] ? f.severity : worst;
+  }, groupFindings[0].severity);
+
+  return (
+    <div className="bg-[#0d0d0d] border border-white/10 rounded-xl overflow-hidden mb-3 transition-all duration-300 hover:border-amber-500/30">
       <button
         onClick={() => setExpanded(!expanded)}
-        className="w-full flex items-center gap-3 px-5 py-4 text-left transition-colors hover:bg-white/[0.02]"
+        className="w-full flex items-center justify-between px-5 py-4 text-left transition-colors hover:bg-white/[0.02]"
       >
-        <div className="flex-shrink-0">
-          <ShieldAlert size={20} className="text-amber-400" />
-        </div>
-        <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-3">
+          <ShieldAlert size={20} className="text-amber-400 flex-shrink-0" />
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-sm font-medium text-white">{finding.vulnerability_type || finding.vulnerabilityType}</span>
-            <span className={`px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider rounded-full border ${severityColors[finding.severity] || "bg-amber-500/15 text-amber-400 border-amber-500/20"}`}>
-              {finding.severity || "Potential"}
+            <span className="text-sm font-medium text-white">{typeName} ({count})</span>
+            <span className={`px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider rounded-full border ${severityColors[worstSeverity] || "bg-amber-500/15 text-amber-400 border-amber-500/20"}`}>
+              {worstSeverity}
             </span>
           </div>
-          <p className="text-xs text-[#666] mt-0.5 truncate">{finding.id}</p>
         </div>
-        <div className="flex-shrink-0 text-[#555]">
+        <div className="text-[#555] flex-shrink-0">
           {expanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
         </div>
       </button>
 
       {expanded && (
-        <div className="px-5 pb-5 border-t border-white/5">
-          <div className="mt-4 mb-6 space-y-4">
-            <div>
-              <div className="flex items-center gap-2 mb-2">
-                <Sparkles size={14} className="text-violet-400" />
-                <h4 className="text-xs font-semibold text-[#888] uppercase tracking-wider">AI Explanation</h4>
-              </div>
-              {isExplaining ? (
-                <div className="flex items-center gap-2.5 py-3 px-3 rounded-lg bg-violet-500/5 border border-violet-500/10">
-                  <Loader2 size={14} className="animate-spin text-violet-400" />
-                  <span className="text-sm text-[#888]">Analyzing with AI…</span>
-                </div>
-              ) : explainError ? (
-                <div className="flex items-center gap-2 py-3 px-3 rounded-lg bg-red-500/5 border border-red-500/10">
-                  <span className="text-sm text-red-400 flex-1">{explainError}</span>
-                  <button
-                    onClick={retry}
-                    className="flex items-center gap-1 text-xs text-[#888] hover:text-white transition-colors"
-                  >
-                    <RotateCw size={12} />
-                    Retry
-                  </button>
-                </div>
-              ) : explanation ? (
-                <p className="text-sm text-[#aaa] mt-1 leading-relaxed whitespace-pre-wrap">
-                  {explanation}
-                </p>
-              ) : null}
-            </div>
+        <div className="border-t border-white/5">
+          {groupFindings.map((finding, idx) => {
+            const isSelected = activeFindingIndex === idx;
             
-            {finding.attacker_payload && (
-              <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
-                <div>
-                  <div className="text-[#666] mb-1">Example attacker input</div>
-                  <code className="block bg-black/40 rounded px-2 py-1 text-red-300 break-all whitespace-pre-wrap">
-                    {finding.attacker_payload}
-                  </code>
-                </div>
-                <div>
-                  <div className="text-[#666] mb-1">Suggested fix</div>
-                  <div className="text-green-300">{finding.fix_suggestion}</div>
-                </div>
-              </div>
-            )}
-          </div>
+            let locationText = finding.id;
+            const sinkNode = (finding.path || []).find(p => p.type === 'sink') || (finding.path || [])[0];
+            if (sinkNode) {
+              locationText = `${sinkNode.file}:${sinkNode.line}`;
+            }
 
-          <AttackSimulationView finding={finding} />
+            return (
+              <div key={idx} className="border-b border-white/5 last:border-b-0">
+                <button
+                  onClick={() => setActiveFindingIndex(isSelected ? null : idx)}
+                  className={`w-full flex items-center gap-3 px-5 py-2.5 text-left text-xs transition-colors ${isSelected ? 'bg-white/[0.04]' : 'hover:bg-white/[0.02]'}`}
+                >
+                  <FileCode size={14} className={isSelected ? "text-violet-400 flex-shrink-0" : "text-[#555] flex-shrink-0"} />
+                  <span className={`truncate ${isSelected ? "text-white" : "text-[#aaa]"}`}>{locationText}</span>
+                </button>
+                
+                {isSelected && (
+                  <div className="px-5 pb-5 pt-3 bg-black/20 border-t border-white/5">
+                     <FindingDetail finding={finding} />
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
       )}
     </div>
   );
 }
 
-function AnalyticsDashboard({ findings }) {
+function AnalyticsDashboard({ findings, activeFilter, onFilterChange }) {
+  const [isMounted, setIsMounted] = useState(false);
+  
+  React.useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
   if (findings.length === 0) return null;
+  if (!isMounted) return <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6"><div className="h-[200px]" /><div className="h-[220px]" /></div>;
 
   // Aggregate by severity
   const severityCounts = { critical: 0, high: 0, medium: 0, low: 0 };
@@ -180,65 +225,118 @@ function AnalyticsDashboard({ findings }) {
   // Aggregate by type
   const typeMap = {};
   findings.forEach(f => {
-    typeMap[f.vulnerability_type] = (typeMap[f.vulnerability_type] || 0) + 1;
+    const t = f.vulnerability_type || f.vulnerabilityType || "Unknown";
+    typeMap[t] = (typeMap[t] || 0) + 1;
   });
   const barData = Object.keys(typeMap).map(k => ({ name: k, count: typeMap[k] }))
     .sort((a, b) => b.count - a.count);
 
+  const handlePieClick = (entry, index, e) => {
+    if (!entry) return;
+    const severity = entry.severity || entry.payload?.severity;
+    if (activeFilter?.type === 'severity' && activeFilter.value === severity) {
+      onFilterChange(null);
+    } else {
+      onFilterChange({ type: 'severity', value: severity });
+    }
+  };
+
+  const handleBarClick = (entry, index, e) => {
+    if (!entry) return;
+    const name = entry.name || entry.payload?.name || entry.activeLabel;
+    if (!name) return;
+    if (activeFilter?.type === 'vulnerability_type' && activeFilter.value === name) {
+      onFilterChange(null);
+    } else {
+      onFilterChange({ type: 'vulnerability_type', value: name });
+    }
+  };
+
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-      {/* Donut Chart */}
-      <div className="bg-[#0d0d0d] border border-white/10 rounded-xl p-4 flex flex-col items-center">
-        <h3 className="text-sm font-medium text-[#888] mb-4 self-start">Severity Breakdown</h3>
-        <div className="w-full h-[200px]">
-          <ResponsiveContainer width="100%" height="100%">
-            <PieChart>
-              <Pie
-                data={pieData}
-                cx="50%"
-                cy="50%"
-                innerRadius={60}
-                outerRadius={80}
-                paddingAngle={5}
-                dataKey="value"
-                stroke="none"
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 min-w-0 min-h-0">
+      {/* Severity Breakdown */}
+      <div className="bg-[#0d0d0d] border border-white/10 rounded-xl p-4 flex flex-col min-w-0">
+        <h3 className="text-sm font-medium text-[#888] mb-4">Severity Breakdown</h3>
+        <div className="flex flex-col gap-3">
+          {pieData.map((entry) => {
+            const isDimmed =
+              activeFilter &&
+              (activeFilter.type !== 'severity' ||
+                activeFilter.value !== entry.severity);
+            const maxCount = Math.max(...pieData.map(d => d.value), 1);
+            const widthPct = Math.max((entry.value / maxCount) * 100, 6);
+
+            return (
+              <button
+                key={entry.name}
+                onClick={() => handlePieClick(entry)}
+                className="group text-left transition-opacity"
+                style={{ opacity: isDimmed ? 0.35 : 1 }}
               >
-                {pieData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={COLORS[entry.severity]} />
-                ))}
-              </Pie>
-              <Tooltip 
-                contentStyle={{ backgroundColor: '#111', borderColor: '#333', borderRadius: '8px' }}
-                itemStyle={{ color: '#fff' }}
-              />
-            </PieChart>
-          </ResponsiveContainer>
-        </div>
-        <div className="flex gap-4 mt-2 text-xs">
-          {pieData.map(entry => (
-            <div key={entry.name} className="flex items-center gap-1.5">
-              <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: COLORS[entry.severity] }} />
-              <span className="text-[#aaa]">{entry.name} ({entry.value})</span>
-            </div>
-          ))}
+                <div className="flex items-center justify-between mb-1 gap-2">
+                  <span className="text-xs text-[#aaa] group-hover:text-white transition-colors truncate">
+                    {entry.name}
+                  </span>
+                  <span className="text-xs text-[#666] flex-shrink-0">
+                    {entry.value}
+                  </span>
+                </div>
+                <div className="w-full h-2 bg-white/5 rounded-full overflow-hidden">
+                  <div
+                    className="h-full rounded-full transition-all duration-300"
+                    style={{ 
+                      width: `${widthPct}%`,
+                      backgroundColor: COLORS[entry.severity]
+                    }}
+                  />
+                </div>
+              </button>
+            );
+          })}
         </div>
       </div>
 
-      {/* Bar Chart */}
-      <div className="bg-[#0d0d0d] border border-white/10 rounded-xl p-4 flex flex-col">
+      {/* Vulnerability Types — plain CSS bars instead of Recharts.
+          Recharts' ResponsiveContainer measures its parent via
+          ResizeObserver and silently renders 0×0 inside CSS grid/flex
+          layouts unless every ancestor has min-width/min-height: 0.
+          Plain divs sidestep that class of bug entirely and are
+          trivially responsive with just a width percentage. */}
+      <div className="bg-[#0d0d0d] border border-white/10 rounded-xl p-4 flex flex-col min-w-0">
         <h3 className="text-sm font-medium text-[#888] mb-4">Vulnerability Types</h3>
-        <div className="w-full h-[220px]">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={barData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-              <XAxis dataKey="name" tick={{ fill: '#666', fontSize: 10 }} tickLine={false} axisLine={false} />
-              <YAxis allowDecimals={false} tick={{ fill: '#666', fontSize: 10 }} tickLine={false} axisLine={false} />
-              <Tooltip 
-                cursor={{ fill: '#ffffff0a' }}
-                contentStyle={{ backgroundColor: '#111', borderColor: '#333', borderRadius: '8px' }}
-              />
-              <Bar dataKey="count" fill="#a855f7" radius={[4, 4, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
+        <div className="flex flex-col gap-3">
+          {barData.map((entry) => {
+            const isDimmed =
+              activeFilter &&
+              (activeFilter.type !== 'vulnerability_type' ||
+                activeFilter.value !== entry.name);
+            const maxCount = barData[0]?.count || 1; // barData is pre-sorted desc
+            const widthPct = Math.max((entry.count / maxCount) * 100, 6); // floor so low-count bars stay visible/clickable
+
+            return (
+              <button
+                key={entry.name}
+                onClick={() => handleBarClick(entry)}
+                className="group text-left transition-opacity"
+                style={{ opacity: isDimmed ? 0.35 : 1 }}
+              >
+                <div className="flex items-center justify-between mb-1 gap-2">
+                  <span className="text-xs text-[#aaa] group-hover:text-white transition-colors truncate">
+                    {entry.name}
+                  </span>
+                  <span className="text-xs text-[#666] flex-shrink-0">
+                    {entry.count}
+                  </span>
+                </div>
+                <div className="w-full h-2 bg-white/5 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-white group-hover:bg-white/80 rounded-full transition-all duration-300"
+                    style={{ width: `${widthPct}%` }}
+                  />
+                </div>
+              </button>
+            );
+          })}
         </div>
       </div>
     </div>
@@ -246,12 +344,38 @@ function AnalyticsDashboard({ findings }) {
 }
 
 function FindingsView({ scanState, onNewScan }) {
-  const findings = scanState.findings || [];
+  const allFindings = scanState.findings || [];
+  const [activeFilter, setActiveFilter] = useState(null);
 
   const SEVERITY_ORDER = { critical: 0, high: 1, medium: 2, low: 3 };
-  const sortedFindings = [...findings].sort(
-    (a, b) => SEVERITY_ORDER[a.severity] - SEVERITY_ORDER[b.severity]
-  );
+
+  let filteredFindings = allFindings;
+  if (activeFilter) {
+    if (activeFilter.type === 'severity') {
+      filteredFindings = allFindings.filter(f => f.severity === activeFilter.value);
+    } else if (activeFilter.type === 'vulnerability_type') {
+      filteredFindings = allFindings.filter(f => (f.vulnerability_type || f.vulnerabilityType || "Unknown") === activeFilter.value);
+    }
+  }
+
+  const groups = {};
+  filteredFindings.forEach(f => {
+    const type = f.vulnerability_type || f.vulnerabilityType || "Unknown";
+    if (!groups[type]) groups[type] = [];
+    groups[type].push(f);
+  });
+
+  const sortedGroups = Object.entries(groups).map(([type, findingsList]) => {
+    const worstSeverity = findingsList.reduce((worst, f) => {
+      return SEVERITY_ORDER[f.severity] < SEVERITY_ORDER[worst] ? f.severity : worst;
+    }, findingsList[0].severity);
+    return { type, findingsList, worstSeverity };
+  }).sort((a, b) => {
+    if (SEVERITY_ORDER[a.worstSeverity] !== SEVERITY_ORDER[b.worstSeverity]) {
+      return SEVERITY_ORDER[a.worstSeverity] - SEVERITY_ORDER[b.worstSeverity];
+    }
+    return b.findingsList.length - a.findingsList.length;
+  });
 
   return (
     <div className="w-full max-w-3xl text-left px-4">
@@ -259,7 +383,7 @@ function FindingsView({ scanState, onNewScan }) {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h2 className="text-xl font-medium text-white flex items-center gap-2">
-            {findings.length > 0 ? (
+            {allFindings.length > 0 ? (
               <>
                 <AlertTriangle size={20} className="text-amber-400" />
                 Scan Results
@@ -282,10 +406,24 @@ function FindingsView({ scanState, onNewScan }) {
         </button>
       </div>
 
-      <AnalyticsDashboard findings={findings} />
+      <AnalyticsDashboard 
+        findings={allFindings} 
+        activeFilter={activeFilter}
+        onFilterChange={setActiveFilter}
+      />
+
+      {activeFilter && (
+        <div className="flex items-center gap-2 mb-4">
+          <span className="text-xs text-[#888]">Filtering by {activeFilter.type === 'severity' ? 'severity' : 'type'}:</span>
+          <span className="text-xs text-white bg-white/10 px-2 py-1 rounded-md border border-white/10 flex items-center gap-1">
+            {activeFilter.value}
+            <button onClick={() => setActiveFilter(null)} className="hover:text-red-400 ml-1 transition-colors">×</button>
+          </span>
+        </div>
+      )}
 
       {/* Findings list or clean message */}
-      {findings.length === 0 ? (
+      {allFindings.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 bg-[#0d0d0d] border border-white/10 rounded-2xl">
           <div className="w-16 h-16 bg-green-500/10 rounded-full flex items-center justify-center mb-4 border border-green-500/20">
             <CheckCircle size={32} className="text-green-400" />
@@ -295,10 +433,14 @@ function FindingsView({ scanState, onNewScan }) {
             No vulnerabilities found in the patterns currently checked for.
           </p>
         </div>
+      ) : filteredFindings.length === 0 ? (
+        <div className="text-center py-12 text-[#666] text-sm bg-[#0d0d0d] border border-white/10 rounded-xl">
+          No findings match the selected filter.
+        </div>
       ) : (
         <div className="space-y-3">
-          {sortedFindings.map((finding, idx) => (
-            <FindingCard key={finding.id || idx} finding={finding} index={idx} />
+          {sortedGroups.map((group) => (
+            <FindingGroup key={group.type} typeName={group.type} groupFindings={group.findingsList} />
           ))}
         </div>
       )}
