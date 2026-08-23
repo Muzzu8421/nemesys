@@ -449,7 +449,7 @@ function FindingsView({ scanState, onNewScan }) {
   );
 }
 
-export default function Dashboard() {
+function DashboardContent() {
   const { data: session, status } = useSession();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const fileInputRef = React.useRef(null);
@@ -925,5 +925,17 @@ export default function Dashboard() {
         className="hidden"
       />
     </div>
+  );
+}
+
+export default function Dashboard() {
+  return (
+    <React.Suspense fallback={
+      <div className="flex h-screen w-full bg-[#0a0a0a] items-center justify-center">
+        <div className="text-[#888] animate-pulse">Loading dashboard...</div>
+      </div>
+    }>
+      <DashboardContent />
+    </React.Suspense>
   );
 }
