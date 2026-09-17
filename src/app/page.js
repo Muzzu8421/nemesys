@@ -1,21 +1,16 @@
 import Image from "next/image";
-import { HackerBackground } from "@/components/ui/hacker-background";
+import { ScrollFrames } from "@/components/ui/ScrollFrames";
 
 export default function Home() {
   return (
-    <div className="min-h-screen flex flex-col bg-background font-sans selection:bg-neon-purple selection:text-white">
+    <div className="min-h-screen flex flex-col bg-transparent font-sans selection:bg-neon-purple selection:text-white relative">
       
+      <ScrollFrames totalFrames={103} />
+
       {/* ============================
           HERO SECTION
           ============================ */}
       <section className="hero-section">
-        {/* Hacker Background */}
-        <HackerBackground
-          color="#22d3ee"
-          fontSize={10}
-          speed={2}
-          className="opacity-80"
-        />
 
         {/* Top Navbar */}
         <nav className="relative z-50 flex items-center justify-between px-6 md:px-12 py-5 md:py-6">
