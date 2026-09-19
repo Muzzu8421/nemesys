@@ -1,128 +1,14 @@
 import Image from "next/image";
-import { ScrollFrames } from "@/components/ui/ScrollFrames";
+import HeroSection from "@/components/HeroSection";
 
 export default function Home() {
   return (
-    <div className="min-h-screen flex flex-col bg-transparent font-sans selection:bg-neon-purple selection:text-white relative">
+    <div className="min-h-screen flex flex-col bg-black font-sans selection:bg-neon-purple selection:text-white relative">
       
-      <ScrollFrames totalFrames={103} />
+      {/* Editorial Hero Section matching Zenrixa reference layout */}
+      <HeroSection />
 
-      {/* ============================
-          HERO SECTION
-          ============================ */}
-      <section className="hero-section">
-
-        {/* Top Navbar */}
-        <nav className="relative z-50 flex items-center justify-between px-6 md:px-12 py-5 md:py-6">
-          <a href="#" className="flex items-center no-underline">
-            <Image
-              src="/logo.png"
-              alt="Nemesys Logo"
-              width={140}
-              height={40}
-              className="h-11 w-auto object-contain"
-            />
-          </a>
-
-          <div className="hidden lg:flex items-center gap-0 bg-white/5 border border-white/10 rounded-full p-1.5 backdrop-blur-md">
-            <a href="#" className="px-5 py-2 text-sm text-white/70 no-underline rounded-full transition-colors duration-200 font-normal whitespace-nowrap hover:text-white hover:bg-white/5">Product</a>
-            <a href="#" className="px-5 py-2 text-sm text-white/70 no-underline rounded-full transition-colors duration-200 font-normal whitespace-nowrap hover:text-white hover:bg-white/5">Pricing</a>
-            <a href="#" className="px-5 py-2 text-sm text-white/70 no-underline rounded-full transition-colors duration-200 font-normal whitespace-nowrap hover:text-white hover:bg-white/5">How it works</a>
-            <a href="#" className="px-5 py-2 text-sm text-white/70 no-underline rounded-full transition-colors duration-200 font-normal whitespace-nowrap hover:text-white hover:bg-white/5">About</a>
-            <a href="#" className="px-5 py-2 text-sm text-white/70 no-underline rounded-full transition-colors duration-200 font-normal whitespace-nowrap hover:text-white hover:bg-white/5">Resources</a>
-            <a href="/login" className="px-6 py-2 text-sm text-white bg-white/10 font-medium rounded-full ml-1 transition-all duration-200 hover:bg-white/20 whitespace-nowrap">Get started</a>
-          </div>
-        </nav>
-
-        {/* Hero Content */}
-        <div className="relative z-10 flex flex-col lg:flex-row items-start justify-between px-8 md:px-12 pt-16 md:pt-20 pb-16 gap-10 md:gap-16 max-w-[1400px] mx-auto">
-          {/* Left side - Text */}
-          <div className="flex-1 max-w-full lg:max-w-[550px] pt-5">
-            <h1 className="text-[clamp(2.2rem,5vw,4rem)] font-normal leading-[1.15] text-white mb-6 tracking-[-0.02em] italic">
-              Your next big<br />
-              <span className="text-accent-blue italic">decision</span> deserves<br />
-              a straight answer
-            </h1>
-            <p className="text-base leading-[1.7] text-white/50 mb-10 max-w-[420px] font-light">
-              Ask your finances anything, in plain English.<br />
-              No more stitching together Stripe, accounting, and<br />
-              spreadsheets — just answers, instantly.
-            </p>
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
-              <a href="/login" className="px-6 py-3 text-sm font-medium text-white bg-transparent border border-white/30 rounded-full cursor-pointer transition-all duration-300 no-underline hover:bg-white/10 hover:border-white/50">Get started</a>
-              <a href="#" className="px-6 py-3 text-sm font-medium text-white bg-white/10 border border-white/10 rounded-full cursor-pointer transition-all duration-300 no-underline hover:bg-white/15 hover:border-white/20">See how it works</a>
-            </div>
-          </div>
-
-          {/* Right side - Dashboard Mockup */}
-          <div className="hero-dashboard">
-            {/* Sidebar Panel (white/light) */}
-            <div className="dashboard-sidebar">
-              <div className="sidebar-header">
-                <div className="sidebar-logo-icon">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
-                    <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
-                  </svg>
-                </div>
-                <span className="sidebar-brand">Nemesys</span>
-              </div>
-
-              <div className="sidebar-new-btn">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <line x1="12" y1="5" x2="12" y2="19" />
-                  <line x1="5" y1="12" x2="19" y2="12" />
-                </svg>
-                New conversation
-              </div>
-
-              <div className="sidebar-label">Recent</div>
-              <div className="sidebar-item">Q2 gross margin variance</div>
-              <div className="sidebar-item">Runway with 3 new hires</div>
-              <div className="sidebar-item">May burn vs plan</div>
-              <div className="sidebar-item">ARR bridge for the board</div>
-              <div className="sidebar-item">Vendor spend anomalies</div>
-            </div>
-
-            {/* Main Chat Panel (dark) */}
-            <div className="dashboard-main">
-              <div className="main-header">
-                <div className="main-logo-icon">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.5">
-                    <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
-                  </svg>
-                </div>
-                <div>
-                  <div className="main-greeting">Good morning, A...</div>
-                </div>
-              </div>
-
-              <div className="main-subtext">Ask anything about your numbers.</div>
-
-              <div className="main-input-area">
-                <div className="main-input-text">What changed since last month?</div>
-                <div className="main-input-row">
-                  <div className="main-input-avatar"></div>
-                  <div className="main-input-select">
-                    Fields 6 
-                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <polyline points="6 9 12 15 18 9" />
-                    </svg>
-                  </div>
-                </div>
-              </div>
-
-              <div className="main-suggestions">
-                <div className="suggestion-chip">What's our runway if we hire 5 engineers?</div>
-                <div className="suggestion-chip">Compare May &amp; ...</div>
-                <div className="suggestion-chip">Which customers drive ARR this quarter?</div>
-                <div className="suggestion-chip">Build the ARR bridge ...</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <main className="flex-1 w-full max-w-7xl mx-auto px-6 py-12 flex flex-col gap-24">
+      <main id="features-section" className="flex-1 w-full max-w-7xl mx-auto px-6 py-12 flex flex-col gap-24">
 
         {/* Large Highlighted Paragraph */}
         <section className="py-8 md:py-12 px-4 max-w-5xl mx-auto text-center">

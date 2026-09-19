@@ -91,3 +91,56 @@ export const AuroraBackground = () => (
     <div className="absolute top-[40%] right-[0%] w-[50vw] h-[50vw] rounded-full opacity-[0.08] blur-[120px] bg-[#818cf8] mix-blend-screen" />
   </div>
 );
+
+// Cyber Hacker Rain Background
+export const HackerBackground = ({ color = "#a855f7", fontSize = 10, speed = 2, className = "" }) => {
+  const canvasRef = useRef(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    let animationFrameId;
+
+    let width = (canvas.width = window.innerWidth);
+    let height = (canvas.height = window.innerHeight);
+
+    const handleResize = () => {
+      width = canvas.width = window.innerWidth;
+      height = canvas.height = window.innerHeight;
+    };
+    window.addEventListener("resize", handleResize);
+
+    const characters = "01010101ASTSECUREVULNTAINTXSSSQLI01";
+    const columns = Math.floor(width / fontSize);
+    const drops = Array(columns).fill(1);
+
+    const draw = () => {
+      ctx.fillStyle = "rgba(0, 0, 0, 0.05)";
+      ctx.fillRect(0, 0, width, height);
+
+      ctx.fillStyle = color;
+      ctx.font = `${fontSize}px monospace`;
+
+      for (let i = 0; i < drops.length; i++) {
+        const text = characters.charAt(Math.floor(Math.random() * characters.length));
+        ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+
+        if (drops[i] * fontSize > height && Math.random() > 0.975) {
+          drops[i] = 0;
+        }
+        drops[i] += speed * 0.5;
+      }
+      animationFrameId = requestAnimationFrame(draw);
+    };
+
+    draw();
+
+    return () => {
+      window.removeEventListener("resize", handleResize);
+      cancelAnimationFrame(animationFrameId);
+    };
+  }, [color, fontSize, speed]);
+
+  return <canvas ref={canvasRef} className={`absolute inset-0 pointer-events-none ${className}`} />;
+};

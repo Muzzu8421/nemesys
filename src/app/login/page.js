@@ -4,7 +4,7 @@ import { signIn, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
-import { SpotlightCard } from "@/components/ui/ReactBits";
+import { SpotlightCard, HackerBackground } from "@/components/ui/ReactBits";
 import Image from "next/image";
 
 export default function LoginPage() {
