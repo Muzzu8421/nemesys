@@ -3,12 +3,12 @@ import HeroSection from "@/components/HeroSection";
 
 export default function Home() {
   return (
-    <div className="min-h-screen flex flex-col bg-black font-sans selection:bg-neon-purple selection:text-white relative">
+    <div className="bg-black font-sans selection:bg-neon-purple selection:text-white relative">
       
       {/* Editorial Hero Section matching Zenrixa reference layout */}
       <HeroSection />
 
-      <main id="features-section" className="flex-1 w-full max-w-7xl mx-auto px-6 py-12 flex flex-col gap-24">
+      <main id="features-section" className="w-full max-w-7xl mx-auto px-6 py-12 flex flex-col gap-24">
 
         {/* Large Highlighted Paragraph */}
         <section className="py-8 md:py-12 px-4 max-w-5xl mx-auto text-center">

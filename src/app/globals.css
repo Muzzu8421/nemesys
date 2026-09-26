@@ -1,3 +1,11 @@
+:root {
+  --font-bebas: 'Bebas Neue', sans-serif;
+  --font-oswald: 'Oswald', sans-serif;
+  --font-ibm-mono: 'IBM Plex Mono', monospace;
+  --font-display: var(--font-bebas), 'Impact', sans-serif;
+  --font-condensed: var(--font-oswald), sans-serif;
+  --font-mono: var(--font-ibm-mono), monospace;
+}
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
@@ -95,17 +103,22 @@ body {
 }
 
 /* ============================================
-   HERO SECTION
+   FONT + COLOR TOKENS
    ============================================ */
+:root {
+  --font-display:   var(--font-bebas), var(--font-oswald), 'Impact', 'Arial Narrow', sans-serif;
+  --font-condensed: var(--font-oswald), 'Arial Narrow', sans-serif;
+  --font-mono:      var(--font-ibm-mono), var(--font-geist-mono), 'Courier New', monospace;
 
-.hero-section {
-  position: relative;
-  min-height: 100vh;
-  background: transparent; /* Use transparent so ScrollFrames is visible */
-  overflow: hidden;
+  --c-black:   #000000;
+  --c-paper:   #E8E3D7;
+  --c-warm:    #F2EFE6;
+  --c-light:   #F5F5F0;
+  --c-crimson: #D92C24;
+  --c-red:     #E52B2B;
+  --c-muted:   #77736B;
+  --c-blue:    #35BFFF;
 }
-
-
 
 /* ============================================
    DASHBOARD MOCKUP

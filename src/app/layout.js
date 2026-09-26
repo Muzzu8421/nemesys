@@ -1,18 +1,35 @@
-import { Geist, Geist_Mono } from "next/font/google";
+import { Anton, Space_Mono, IBM_Plex_Mono, Caveat } from "next/font/google";
 import "./globals.css";
 import SessionWrapper from "@/components/SessionWrapper";
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
-
 import { SmoothScroll } from "@/components/ui/SmoothScroll";
+
+const anton = Anton({ 
+  weight: "400", 
+  subsets: ["latin"], 
+  variable: "--font-anton",
+  display: "swap"
+});
+
+const spaceMono = Space_Mono({ 
+  weight: ["400", "700"], 
+  subsets: ["latin"], 
+  variable: "--font-space-mono",
+  display: "swap"
+});
+
+const ibmPlexMono = IBM_Plex_Mono({ 
+  weight: ["400", "500", "600"], 
+  subsets: ["latin"], 
+  variable: "--font-ibm-plex",
+  display: "swap"
+});
+
+const caveat = Caveat({ 
+  weight: ["600", "700"], 
+  subsets: ["latin"], 
+  variable: "--font-caveat",
+  display: "swap"
+});
 
 export const metadata = {
   title: "Nemesys",
@@ -23,7 +40,7 @@ export default function RootLayout({ children }) {
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${anton.variable} ${spaceMono.variable} ${ibmPlexMono.variable} ${caveat.variable} h-full antialiased bg-black`}
     >
       <SessionWrapper>
           <body className="min-h-full flex flex-col">

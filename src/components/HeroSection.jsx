@@ -1,473 +1,190 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import Image from "next/image";
-import { 
-  ChevronRight, 
-  ArrowRight, 
-  ChevronLeft, 
-  ChevronDown, 
-  Star, 
-  X, 
-  Cpu, 
-  ArrowDown 
-} from "lucide-react";
 
 export default function HeroSection() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [sliderIndex, setSliderIndex] = useState(0);
-  const [timeString, setTimeString] = useState("6:30pm · 23 June 2026");
 
-  // Keep live time updated in editorial format
-  useEffect(() => {
-    const updateTime = () => {
-      const now = new Date();
-      const time = now.toLocaleTimeString("en-US", {
-        hour: "numeric",
-        minute: "2-digit",
-        hour12: true,
-      }).toLowerCase();
-      const date = now.toLocaleDateString("en-US", {
-        day: "numeric",
-        month: "short",
-        year: "numeric",
-      });
-      setTimeString(`${time} · ${date}`);
-    };
-    updateTime();
-    const interval = setInterval(updateTime, 60000);
-    return () => clearInterval(interval);
-  }, []);
-
-  const sliderItems = [
-    {
-      title: "Engineered to protect.",
-      tag: "AST TAINT ENGINE",
-      metric: "99.8% Precision",
-      detail: "Deep traversal across untrusted input sinks",
-    },
-    {
-      title: "Zero false positives.",
-      tag: "HEURISTIC PARSER",
-      metric: "8ms Latency",
-      detail: "Compiler-level static analysis without overhead",
-    },
-    {
-      title: "Autonomous remediation.",
-      tag: "AI PATCH SYSTEM",
-      metric: "Instant Fixes",
-      detail: "Context-aware pull request generation on alert",
-    },
-  ];
-
-  const handleNextSlide = () => {
-    setSliderIndex((prev) => (prev + 1) % sliderItems.length);
+  // Subtle ink-textured styling for the main typography using CSS background-clip
+  const inkBleedWhite = {
+    backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.5' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.15'/%3E%3C/svg%3E"), linear-gradient(#F2EFE6, #F2EFE6)`,
+    backgroundBlendMode: 'multiply',
+    WebkitBackgroundClip: 'text',
+    WebkitTextFillColor: 'transparent',
   };
 
-  const handlePrevSlide = () => {
-    setSliderIndex((prev) => (prev - 1 + sliderItems.length) % sliderItems.length);
-  };
-
-  const scrollToContent = () => {
-    const target = document.getElementById("features-section");
-    if (target) {
-      target.scrollIntoView({ behavior: "smooth" });
-    } else {
-      window.scrollBy({ top: window.innerHeight * 0.85, behavior: "smooth" });
-    }
+  const inkBleedRed = {
+    backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.5' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.25'/%3E%3C/svg%3E"), linear-gradient(#D92C24, #D92C24)`,
+    backgroundBlendMode: 'multiply',
+    WebkitBackgroundClip: 'text',
+    WebkitTextFillColor: 'transparent',
   };
 
   return (
-    <section className="relative w-full lg:h-screen lg:max-h-screen min-h-screen bg-black text-white overflow-hidden flex flex-col justify-between select-none">
+    <section className="relative w-full h-screen min-h-[600px] bg-black overflow-hidden flex flex-col">
       
-      {/* =========================================================================
-          BACKGROUND VIDEO (Continuous Loop, Subtle Blur)
-          ========================================================================= */}
-      <video
-        autoPlay
-        loop
-        muted
-        playsInline
-        className="absolute inset-0 w-full h-full object-cover pointer-events-none filter blur-[1px] scale-105 z-0"
-      >
-        <source src="/spacebg.mp4" type="video/mp4" />
-      </video>
+      {/* ── SVG FILTERS (For scribbles and button edges) ───────────── */}
+      <svg width="0" height="0" className="absolute pointer-events-none">
+        <defs>
+          <filter id="rough-edge" x="-20%" y="-20%" width="140%" height="140%">
+            <feTurbulence type="fractalNoise" baseFrequency="0.05" numOctaves="3" result="noise" seed="1" />
+            <feDisplacementMap in="SourceGraphic" in2="noise" scale="6" xChannelSelector="R" yChannelSelector="G" />
+          </filter>
+        </defs>
+      </svg>
 
-      {/* Cinematic Vignette & Readability Gradient Overlay */}
-      <div 
-        className="absolute inset-0 pointer-events-none z-10" 
-        style={{
-          background: "radial-gradient(circle at 50% 40%, rgba(0, 0, 0, 0.25) 0%, rgba(0, 0, 0, 0.6) 80%, rgba(0, 0, 0, 0.85) 100%)",
-        }}
-      />
-      <div className="absolute inset-0 pointer-events-none z-10 bg-gradient-to-b from-black/40 via-transparent to-black/70" />
+      {/* ── BACKGROUND IMAGE ─────────────────────────────────────────── */}
+      <div className="absolute inset-0 z-0">
+        <Image
+          src="/image1.jpg"
+          alt="Hero background"
+          fill
+          priority
+          quality={95}
+          className="object-cover object-[center_top] w-full h-full"
+          sizes="100vw"
+        />
+      </div>
 
-      {/* =========================================================================
-          TOP NAVIGATION BAR
-          ========================================================================= */}
-      <header className="relative z-40 w-full px-6 md:px-12 lg:px-16 pt-5 sm:pt-6 pb-2 flex items-center justify-between max-w-[1700px] mx-auto">
-        
-        {/* Brand Logo: Official Nemesys Logo on Top Left */}
-        <a href="#" className="flex items-center no-underline transition-opacity hover:opacity-85">
-          <Image
-            src="/icon.png"
-            alt="Nemesys Logo"
-            width={140}
-            height={40}
-            priority
-            className="h-8 sm:h-9 md:h-10 w-auto object-contain mix-blend-screen"
-          />
+      {/* ── LOCALIZED OVERLAYS FOR TEXT READABILITY ──────────────────── */}
+      {/* Removed artificial backdrops/blur as requested to display image natively */}
+
+      {/* ── TARGET CROSSHAIR (Left edge) ─────────────────────────────── */}
+      <div className="absolute left-[-15px] top-[45%] z-[10] w-[60px] h-[60px] pointer-events-none">
+        <svg viewBox="0 0 100 100" className="w-full h-full opacity-80" style={{ filter: "url(#rough-edge)" }}>
+          <circle cx="50" cy="50" r="30" fill="none" stroke="#D92C24" strokeWidth="2.5" />
+          <line x1="0" y1="50" x2="100" y2="50" stroke="#D92C24" strokeWidth="2.5" />
+          <line x1="50" y1="0" x2="50" y2="100" stroke="#D92C24" strokeWidth="2.5" />
+        </svg>
+      </div>
+
+      {/* ── NAVIGATION ───────────────────────────────────────────────── */}
+      <header className="relative z-[20] flex items-center justify-between px-[clamp(16px,3vw,52px)] py-[clamp(14px,2.5vh,28px)] shrink-0">
+        <a href="#" className="flex items-center gap-1.5 no-underline shrink-0 group">
+          <span className="text-[#D92C24] text-[0.85rem] leading-none">▲</span>
+          <span className="font-[family-name:var(--font-anton)] text-[clamp(1.1rem,1.8vw,1.5rem)] text-[#F2EFE6] tracking-[0.05em] uppercase leading-none drop-shadow-md">
+            NEMESYS
+          </span>
         </a>
 
-        {/* Center Nav Links with active dot indicator */}
-        <nav className="hidden lg:flex items-center gap-8 text-[13.5px] font-medium text-white/70">
-          <a href="#" className="relative py-1 text-white font-semibold no-underline flex flex-col items-center">
-            <span>Home</span>
-            <span className="w-1 h-1 rounded-full bg-white mt-1 shadow-[0_0_8px_white]"></span>
-          </a>
-          
-          <a href="#product" className="flex items-center gap-1 hover:text-white transition-colors no-underline">
-            <span>Product</span>
-            <ChevronDown className="w-3.5 h-3.5 opacity-60" />
-          </a>
-
-          <a href="#scanner" className="hover:text-white transition-colors no-underline">
-            Scanner
-          </a>
-
-          <a href="#vulnerabilities" className="hover:text-white transition-colors no-underline">
-            Vulnerabilities
-          </a>
-
-          <a href="#docs" className="hover:text-white transition-colors no-underline">
-            Docs
-          </a>
-
-          <a href="#partners" className="hover:text-white transition-colors no-underline">
-            Partners
-          </a>
+        <nav className="hidden md:flex items-center gap-[clamp(16px,2.5vw,40px)] absolute left-1/2 -translate-x-1/2">
+          {["Features", "How It Works", "Pricing", "Docs", "Blog"].map((item) => (
+            <a key={item} href="#" className="font-[family-name:var(--font-space-mono)] text-[clamp(0.6rem,0.8vw,0.75rem)] font-medium text-[#E8E3D7]/75 uppercase tracking-[0.1em] hover:text-[#F2EFE6] transition-colors whitespace-nowrap">
+              {item}
+            </a>
+          ))}
         </nav>
 
-        {/* Right Info: Timezone / Date & Menu Pill Button (Mobile ONLY) */}
-        <div className="flex items-center gap-4">
-          <div className="hidden sm:flex flex-col items-end text-right">
-            <span className="text-[10px] uppercase tracking-wider font-semibold text-white/40">
-              Timezone
-            </span>
-            <span className="text-xs font-semibold text-white/90 tabular-nums">
-              {timeString}
-            </span>
-          </div>
+        <a href="#" className="hidden md:inline-flex items-center gap-1.5 px-[clamp(12px,1.5vw,22px)] py-[clamp(5px,0.8vh,8px)] border-[1.5px] border-[#E8E3D7]/40 bg-black/50 text-[#F2EFE6] font-[family-name:var(--font-space-mono)] font-bold text-[clamp(0.6rem,0.8vw,0.75rem)] uppercase tracking-[0.1em] shrink-0 transition-colors hover:bg-[#E8E3D7]/15 hover:border-[#E8E3D7]/80 shadow-sm [clip-path:polygon(0_0,calc(100%-6px)_0,100%_6px,100%_100%,6px_100%,0_calc(100%-6px))]">
+          Get Started →
+        </a>
 
-          {/* Menu Button: Visible ONLY on Mobile / Tablet (< lg screens) */}
-          <button 
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="flex lg:hidden items-center gap-2 px-3.5 py-1.5 rounded-full border border-white/20 bg-white/10 hover:bg-white/20 backdrop-blur-md text-xs font-semibold text-white shadow-sm transition-all duration-200 cursor-pointer active:scale-95"
-            aria-label="Toggle Menu"
-          >
-            <span className="text-xs font-bold leading-none">=</span>
-            <span className="tracking-wider">MENU</span>
-          </button>
-        </div>
+        <button
+          className="md:hidden flex bg-transparent border-[1.5px] border-[#E8E3D7]/40 text-[#F2EFE6] px-2.5 py-1.5 text-base cursor-pointer"
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          aria-label="Menu"
+        >
+          ☰
+        </button>
       </header>
 
-      {/* Mobile Drawer Menu */}
-      {mobileMenuOpen && (
-        <div className="lg:hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-md flex justify-end">
-          <div className="w-4/5 max-w-sm bg-[#0e0f14] border-l border-white/10 h-full shadow-2xl p-8 flex flex-col justify-between animate-in slide-in-from-right duration-300">
-            <div>
-              <div className="flex items-center justify-between pb-6 border-b border-white/10">
-                <Image
-                  src="/logo.png"
-                  alt="Nemesys Logo"
-                  width={120}
-                  height={34}
-                  className="h-7 w-auto object-contain mix-blend-screen"
-                />
-                <button 
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="p-1 rounded-full hover:bg-white/10 text-white/70"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-
-              <div className="flex flex-col gap-4 mt-8 text-base font-medium text-white/80">
-                <a 
-                  href="#" 
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="px-3 py-2 rounded-lg bg-white/10 font-semibold text-white"
-                >
-                  Home
-                </a>
-                <a 
-                  href="#product" 
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="px-3 py-2 rounded-lg hover:bg-white/5"
-                >
-                  Product
-                </a>
-                <a 
-                  href="#scanner" 
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="px-3 py-2 rounded-lg hover:bg-white/5"
-                >
-                  Scanner
-                </a>
-                <a 
-                  href="#vulnerabilities" 
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="px-3 py-2 rounded-lg hover:bg-white/5"
-                >
-                  Vulnerabilities
-                </a>
-                <a 
-                  href="#docs" 
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="px-3 py-2 rounded-lg hover:bg-white/5"
-                >
-                  Docs
-                </a>
-                <a 
-                  href="#partners" 
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="px-3 py-2 rounded-lg hover:bg-white/5"
-                >
-                  Partners
-                </a>
-              </div>
-            </div>
-
-            <div className="pt-6 border-t border-white/10">
-              <div className="text-xs text-white/50 mb-2">Timezone / Status</div>
-              <div className="text-xs font-mono font-medium text-white/90 mb-4">{timeString}</div>
-              <a 
-                href="/login" 
-                className="w-full py-3 bg-white text-black rounded-full text-center text-sm font-semibold flex items-center justify-center gap-2 shadow-md hover:bg-neutral-200 transition"
-              >
-                Launch Console <ArrowRight className="w-4 h-4" />
-              </a>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* =========================================================================
-          MAIN HERO BODY (Wide 2-Column Editorial Composition)
-          ========================================================================= */}
-      <div className="relative z-20 flex-1 max-w-[1700px] w-full mx-auto px-6 md:px-12 lg:px-16 py-2 sm:py-4 lg:py-2 flex flex-col lg:flex-row items-center justify-between gap-8 lg:gap-12">
+      {/* ── MAIN CONTENT AREA ────────────────────────────────────────── */}
+      <div className="relative z-[15] flex-1 flex items-end px-[clamp(16px,3vw,52px)] pb-[clamp(32px,6vh,64px)] max-w-full lg:max-w-[62%]">
         
-        {/* =======================================================================
-            LEFT COLUMN: Editorial Kicker, Headline, Rating, Dual CTAs
-            ======================================================================= */}
-        <div className="flex-1 w-full lg:max-w-[560px] xl:max-w-[640px] flex flex-col items-start z-30">
-          
-          {/* Tag / Kicker matching "| Creative Agency" */}
-          <div className="flex items-center gap-2 mb-3">
-            <span className="text-white/40 font-serif font-light text-base leading-none">|</span>
-            <span className="text-[11px] md:text-xs font-semibold tracking-wider uppercase text-white/70">
-              Security Intelligence
-            </span>
-          </div>
+        {/* LEFT COLUMN */}
+        <div className="flex flex-col w-full relative">
 
-          {/* Headline matching "We start from zero, delivering only what mat[ters]" */}
-          <h1 className="text-[2.5rem] sm:text-[3.2rem] md:text-[3.7rem] lg:text-[4.1rem] xl:text-[4.5rem] font-bold tracking-[-0.035em] leading-[1.03] text-white mb-5 drop-shadow-[0_4px_16px_rgba(0,0,0,0.5)]">
-            We scan from <br />
-            zero, delivering <br />
-            only what matters.
-          </h1>
-
-          {/* Ratings Social Proof matching "★★★★★ 3000+ Customers" */}
-          <div className="flex items-center gap-2 mb-6 sm:mb-8">
-            <div className="flex items-center text-[#ff781f] gap-0.5">
-              {[...Array(5)].map((_, i) => (
-                <Star key={i} className="w-3.5 h-3.5 fill-[#ff781f] text-[#ff781f]" />
-              ))}
-            </div>
-            <span className="text-xs font-semibold tracking-tight text-white/80 ml-1">
-              3000+ Repos Secured
-            </span>
-          </div>
-
-          {/* Dual Action Buttons matching "Chat With Us ->" and "Our Works" */}
-          <div className="flex items-center flex-wrap gap-3.5">
-            {/* Primary Pill Button with White Circular Arrow Badge */}
-            <a 
-              href="/login" 
-              className="inline-flex items-center gap-3.5 pl-6 pr-2.5 py-2.5 rounded-full bg-white text-black font-semibold text-[13.5px] shadow-lg shadow-black/30 hover:bg-neutral-200 transition-all duration-200 group no-underline active:scale-95"
-            >
-              <span>Scan Your Code</span>
-              <div className="w-7 h-7 rounded-full bg-black text-white flex items-center justify-center transition-transform duration-300 group-hover:translate-x-0.5">
-                <ArrowRight className="w-3.5 h-3.5 stroke-[2.5]" />
+          {/* Main Headline: SECURE / YOUR / CODE */}
+          <div className="relative flex flex-col leading-[0.92] mb-[clamp(8px,2vh,20px)] mt-auto pt-[clamp(20px,4vh,60px)] z-[20] [filter:drop-shadow(4px_4px_0_#000)_drop-shadow(-1px_-1px_0_#000)_drop-shadow(0_15px_40px_rgba(0,0,0,0.9))]">
+            
+            <div className="font-[family-name:var(--font-anton)] font-normal text-[clamp(4.5rem,9.5vw,11.5rem)] uppercase tracking-[-0.02em]">
+              <div style={inkBleedWhite}>SECURE</div>
+              <div className="flex flex-wrap items-baseline mt-1">
+                <span style={inkBleedWhite} className="mr-[clamp(10px,2vw,20px)]">YOUR</span>
+                <span className="relative inline-block">
+                  <span style={inkBleedRed} className="relative z-10">CODE</span>
+                  
+                  {/* Signature red scribble exactly under CODE */}
+                  <div className="absolute left-[-5%] right-[-15%] bottom-[-10px] md:bottom-[-20px] h-[35px] md:h-[50px] pointer-events-none z-[3]">
+                    <svg viewBox="0 0 300 100" className="w-full h-full opacity-100" preserveAspectRatio="none" style={{ filter: "drop-shadow(3px 3px 0px rgba(0,0,0,0.8)) url(#rough-edge)" }}>
+                      <path d="M10,50 L280,30 L220,50 L290,50" fill="none" stroke="#D92C24" strokeWidth="12" strokeLinecap="square" strokeLinejoin="miter" />
+                      <path d="M30,70 L260,45 L180,65 L270,70" fill="none" stroke="#D92C24" strokeWidth="8" strokeLinecap="square" strokeLinejoin="miter" opacity="0.8" />
+                    </svg>
+                  </div>
+                </span>
               </div>
+            </div>
+            
+          </div>
+
+          {/* Supporting description (IBM Plex Mono for editorial copy) */}
+          <p className="font-[family-name:var(--font-ibm-plex)] font-medium text-[clamp(14px,1.2vw,16px)] text-[#E8E3D7]/90 leading-[1.45] max-w-[clamp(280px,36vw,540px)] m-0 mb-[clamp(16px,3vh,32px)] tracking-tight [text-shadow:0_2px_4px_rgba(0,0,0,0.9)] relative z-[10]">
+            NEMESYS helps developers find and fix security<br className="hidden sm:block"/>
+            vulnerabilities in their code using advanced<br className="hidden sm:block"/>
+            static analysis and AI.
+          </p>
+
+          {/* CTA Buttons */}
+          <div className="flex items-center gap-[clamp(12px,2vw,24px)] flex-wrap mb-[clamp(24px,4vh,48px)] relative z-[10]">
+            
+            {/* Primary Ripped Tape Button */}
+            <a href="#" className="relative group inline-flex items-center justify-center px-[clamp(20px,3vw,36px)] py-[clamp(12px,2vh,20px)] no-underline">
+              {/* SVG Rough Background */}
+              <svg className="absolute inset-0 w-full h-full text-[#D92C24] transition-colors group-hover:text-[#E52B2B]" preserveAspectRatio="none" viewBox="0 0 200 60" style={{ filter: "drop-shadow(4px 4px 0px rgba(0,0,0,0.7)) url(#rough-edge)" }}>
+                <path d="M5,10 Q25,3 100,5 T195,8 Q198,30 194,52 Q100,58 6,55 Q2,30 5,10 Z" fill="currentColor" />
+              </svg>
+              <span className="relative z-10 font-[family-name:var(--font-space-mono)] text-[clamp(0.75rem,1vw,0.9rem)] font-bold text-[#F2EFE6] uppercase tracking-[0.08em] flex items-center gap-2 [text-shadow:0_1px_2px_rgba(0,0,0,0.3)]">
+                Get Started Free <span className="text-[1.2em]">→</span>
+              </span>
             </a>
 
-            {/* Secondary Frosted Pill Button */}
-            <button 
-              onClick={scrollToContent}
-              className="px-6 py-3 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 backdrop-blur-md text-[13.5px] font-medium text-white transition-all duration-200 cursor-pointer active:scale-95"
-            >
-              Live Analysis
-            </button>
+            {/* Secondary Rough Outline Button */}
+            <a href="#" className="relative group inline-flex items-center justify-center px-[clamp(18px,2.8vw,32px)] py-[clamp(10px,1.8vh,18px)] no-underline">
+              {/* SVG Rough Outline Background */}
+              <svg className="absolute inset-0 w-full h-full text-[#E8E3D7] transition-all group-hover:text-[#F2EFE6]" preserveAspectRatio="none" viewBox="0 0 200 60" style={{ filter: "drop-shadow(3px 3px 0px rgba(0,0,0,0.5)) url(#rough-edge)" }}>
+                <path d="M8,12 Q40,5 100,8 T192,12 Q196,30 190,50 Q100,55 10,50 Q4,30 8,12 Z" fill="rgba(0,0,0,0.4)" stroke="currentColor" strokeWidth="2.5" className="group-hover:fill-[rgba(232,227,215,0.1)] transition-all" />
+              </svg>
+              <span className="relative z-10 font-[family-name:var(--font-space-mono)] text-[clamp(0.75rem,1vw,0.9rem)] font-bold text-[#F2EFE6] uppercase tracking-[0.08em] flex items-center gap-3">
+                <svg viewBox="0 0 24 24" fill="currentColor" className="w-[1.2em] h-[1.2em]">
+                  <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z" />
+                </svg>
+                View on GitHub
+              </span>
+            </a>
           </div>
-        </div>
 
-        {/* =======================================================================
-            RIGHT COLUMN: Interactive Telemetry Card & Partner Logos
-            (Matching the "Design to explore" card and "Our Partners" section)
-            ======================================================================= */}
-        <div className="w-full lg:w-auto lg:min-w-[360px] xl:min-w-[400px] flex flex-col items-start lg:items-end justify-between z-30 space-y-6 sm:space-y-8">
+          {/* Statistics Block */}
+          <div className="flex items-start gap-[clamp(16px,3vw,36px)] pt-[clamp(8px,1vh,16px)] relative z-[10]">
+            <div className="flex flex-col gap-1.5 relative">
+              <span className="font-[family-name:var(--font-anton)] text-[clamp(2.2rem,3.5vw,3.5rem)] text-[#D92C24] leading-none tracking-[-0.01em] [text-shadow:2px_2px_0_rgba(0,0,0,0.8)]">10K+</span>
+              <span className="font-[family-name:var(--font-ibm-plex)] text-[clamp(10px,0.75vw,12px)] font-medium text-[#E8E3D7]/90 uppercase tracking-[0.05em] leading-[1.3]">Vulnerabilities<br />Detected</span>
+            </div>
+            
+            {/* Red Diagonal Slash */}
+            <div className="font-[family-name:var(--font-anton)] text-[clamp(2.2rem,3.5vw,3.5rem)] text-[#D92C24] leading-none opacity-80 select-none">/</div>
+            
+            <div className="flex flex-col gap-1.5 relative">
+              <span className="font-[family-name:var(--font-anton)] text-[clamp(2.2rem,3.5vw,3.5rem)] text-[#D92C24] leading-none tracking-[-0.01em] [text-shadow:2px_2px_0_rgba(0,0,0,0.8)]">500+</span>
+              <span className="font-[family-name:var(--font-ibm-plex)] text-[clamp(10px,0.75vw,12px)] font-medium text-[#E8E3D7]/90 uppercase tracking-[0.05em] leading-[1.3]">Projects<br />Secured</span>
+            </div>
+            
+            {/* Red Diagonal Slash */}
+            <div className="font-[family-name:var(--font-anton)] text-[clamp(2.2rem,3.5vw,3.5rem)] text-[#D92C24] leading-none opacity-80 select-none">/</div>
+            
+            <div className="flex flex-col gap-1.5 relative">
+              <span className="font-[family-name:var(--font-anton)] text-[clamp(2.2rem,3.5vw,3.5rem)] text-[#D92C24] leading-none tracking-[-0.01em] [text-shadow:2px_2px_0_rgba(0,0,0,0.8)]">99%</span>
+              <span className="font-[family-name:var(--font-ibm-plex)] text-[clamp(10px,0.75vw,12px)] font-medium text-[#E8E3D7]/90 uppercase tracking-[0.05em] leading-[1.3]">Developer<br />Satisfaction</span>
+            </div>
+          </div>
           
-          {/* Interactive Modern Portfolio Card Widget */}
-          <div className="w-full max-w-[380px] bg-white/[0.08] border border-white/20 rounded-[28px] p-5 shadow-2xl backdrop-blur-2xl">
-            
-            {/* Dark Sub-Card Tile */}
-            <div className="w-full bg-black/60 border border-white/10 rounded-2xl p-4 text-white mb-4 shadow-md flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-white/10 border border-white/15 flex items-center justify-center text-white">
-                  <Cpu className="w-5 h-5 text-amber-400" />
-                </div>
-                <div>
-                  <div className="text-[10.5px] font-mono uppercase tracking-wider text-neutral-400">
-                    {sliderItems[sliderIndex].tag}
-                  </div>
-                  <div className="text-xs font-bold text-white">
-                    {sliderItems[sliderIndex].metric}
-                  </div>
-                </div>
-              </div>
-
-              <div className="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center text-white/70">
-                <span className="text-xs font-bold font-mono">0{sliderIndex + 1}</span>
-              </div>
-            </div>
-
-            {/* Content & Heading matching "Design to explore." */}
-            <div className="px-1 mb-4">
-              <h3 className="text-xl sm:text-2xl font-bold tracking-tight text-white mb-1">
-                {sliderItems[sliderIndex].title}
-              </h3>
-              <p className="text-xs text-neutral-300 leading-relaxed">
-                {sliderItems[sliderIndex].detail}
-              </p>
-            </div>
-
-            {/* Slider Track & Navigation Arrow Controls */}
-            <div className="flex items-center justify-between pt-2 border-t border-white/10 px-1">
-              {/* Progress dots / bar */}
-              <div className="flex items-center gap-1.5">
-                {sliderItems.map((_, idx) => (
-                  <div 
-                    key={idx}
-                    onClick={() => setSliderIndex(idx)}
-                    className={`h-1.5 rounded-full transition-all duration-300 cursor-pointer ${
-                      sliderIndex === idx ? "w-6 bg-white shadow-[0_0_8px_white]" : "w-1.5 bg-white/30"
-                    }`}
-                  />
-                ))}
-              </div>
-
-              {/* Navigation circle buttons matching "<" and ">" */}
-              <div className="flex items-center gap-2">
-                <button 
-                  onClick={handlePrevSlide}
-                  className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 border border-white/10 text-white flex items-center justify-center transition-all duration-150 active:scale-95 shadow-sm cursor-pointer"
-                  aria-label="Previous Slide"
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                </button>
-                <button 
-                  onClick={handleNextSlide}
-                  className="w-8 h-8 rounded-full bg-white text-black hover:bg-neutral-200 flex items-center justify-center transition-all duration-150 active:scale-95 shadow-sm cursor-pointer"
-                  aria-label="Next Slide"
-                >
-                  <ChevronRight className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-
-          </div>
-
-          {/* Partner / Ecosystem Logos matching "Our Partners" */}
-          <div className="w-full max-w-[380px] flex flex-col items-start lg:items-end">
-            <span className="text-[11px] uppercase tracking-widest font-semibold text-white/50 mb-2.5">
-              Our Partners
-            </span>
-            
-            {/* Monochrome minimalist brand logos grid */}
-            <div className="w-full grid grid-cols-3 sm:grid-cols-3 gap-y-2.5 gap-x-4 text-white/70">
-              <div className="flex items-center gap-1.5 font-bold text-xs tracking-tight hover:text-white transition-colors">
-                <span className="font-mono text-sm">✦</span> GitHub
-              </div>
-              <div className="flex items-center gap-1.5 font-bold text-xs tracking-tight hover:text-white transition-colors">
-                <span className="font-mono text-sm">❖</span> GitLab
-              </div>
-              <div className="flex items-center gap-1.5 font-bold text-xs tracking-tight hover:text-white transition-colors">
-                <span className="font-mono text-sm">▲</span> Vercel
-              </div>
-              <div className="flex items-center gap-1.5 font-bold text-xs tracking-tight hover:text-white transition-colors">
-                <span className="font-mono text-sm">◈</span> Docker
-              </div>
-              <div className="flex items-center gap-1.5 font-bold text-xs tracking-tight hover:text-white transition-colors">
-                <span className="font-mono text-sm">☁</span> AWS
-              </div>
-              <div className="flex items-center gap-1.5 font-bold text-xs tracking-tight hover:text-white transition-colors">
-                <span className="font-mono text-sm">⬡</span> Node.js
-              </div>
-            </div>
-          </div>
-
         </div>
-
       </div>
 
-      {/* =========================================================================
-          OVERSIZED BRAND TEXT: "NEMESYS" (Replacing "ZENRIXA")
-          Clear, visible metallic silver/white gradient positioned right above the bottom dock
-          ========================================================================= */}
-      <div className="relative w-full pointer-events-none select-none flex items-center justify-center overflow-hidden leading-none z-20 -my-2 sm:-my-4 lg:-my-6">
-        <span 
-          className="text-[14.5vw] sm:text-[15.5vw] lg:text-[16.5vw] font-black tracking-[-0.035em] uppercase text-center block w-full whitespace-nowrap"
-          style={{
-            background: "linear-gradient(to bottom, rgba(255, 255, 255, 0.3) 0%, rgba(255, 255, 255, 0.1) 60%, rgba(255, 255, 255, 0.01) 100%)",
-            WebkitBackgroundClip: "text",
-            WebkitTextFillColor: "transparent",
-            textShadow: "0 0 35px rgba(255, 255, 255, 0.12)",
-          }}
-        >
-          NEMESYS
-        </span>
-      </div>
-
-      {/* =========================================================================
-          FLOATING BOTTOM CAPSULE DOCK (Matching the frosted dock at bottom)
-          "• 99.8% AST Precision" | "• Static Taint Analysis Engine" | "Scroll Down"
-          ========================================================================= */}
-      <div className="relative z-30 w-full px-6 pb-4 sm:pb-6 pt-1 flex items-center justify-center">
-        <div className="w-full max-w-[920px] bg-black/40 hover:bg-black/60 border border-white/20 backdrop-blur-2xl rounded-full py-2.5 sm:py-3 px-6 sm:px-10 shadow-2xl flex items-center justify-between text-white/90 text-[11px] sm:text-xs font-semibold tracking-wide transition-all duration-300">
-          
-          {/* Left item */}
-          <div className="flex items-center gap-2">
-            <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 shadow-[0_0_8px_#06b6d4]" />
-            <span>99.8% AST Precision</span>
-          </div>
-
-          {/* Center item */}
-          <div className="hidden sm:flex items-center gap-2 text-white/70">
-            <span className="w-1.5 h-1.5 rounded-full bg-white/40" />
-            <span>Static Taint Analysis Engine</span>
-          </div>
-
-          {/* Right item with click to scroll */}
-          <button 
-            onClick={scrollToContent}
-            className="flex items-center gap-1.5 text-white hover:text-cyan-300 transition-colors cursor-pointer group"
-          >
-            <span>Scroll Down</span>
-            <ArrowDown className="w-3.5 h-3.5 transition-transform duration-300 group-hover:translate-y-0.5" />
-          </button>
-
-        </div>
+      {/* Handwritten Editorial Note (Caveat Bold) */}
+      <div className="absolute right-[clamp(20px,4vw,60px)] bottom-[clamp(40px,8vh,100px)] z-[15] max-w-[clamp(160px,12vw,220px)] font-[family-name:var(--font-caveat)] font-bold text-[clamp(1.4rem,1.8vw,1.8rem)] leading-[1.1] text-[#E8E3D7]/90 -rotate-[4deg] opacity-95 pointer-events-none drop-shadow-[1px_2px_3px_rgba(0,0,0,0.6)]">
+        BUILD <span className="text-[#D92C24]">SAFER</span> SOFTWARE<br/>
+        FOR A <span className="text-[#D92C24]">STRONGER</span> TOMORROW.
       </div>
 
     </section>
