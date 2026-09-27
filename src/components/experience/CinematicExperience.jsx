@@ -21,6 +21,8 @@ const inkBleedRed = {
   WebkitTextFillColor: "transparent",
 };
 
+const TRACE_NODE_X = [50, 230, 410, 590, 770, 950];
+
 /**
  * CinematicExperience Master Component
  * Houses the persistent cinematic stage and coordinates the 4 narrative states:
@@ -47,11 +49,13 @@ export default function CinematicExperience() {
   const threatWordRefs   = useRef([]);
   const threatNodeRefs   = useRef([]);
   const threatPathRef    = useRef(null);
+  const threatTracerRef  = useRef(null);
   const threatSinkRef    = useRef(null);
 
   // 03 — Security Topology Refs
   const topologyRef      = useRef(null);
   const topoHeadRef      = useRef(null);
+  const topoPhraseRefs   = useRef([]);
   const topoAlertRef     = useRef(null);
   const topoStatsRef     = useRef(null);
 
@@ -132,35 +136,62 @@ export default function CinematicExperience() {
         25
       );
 
-      // Red tracing signal physically travels along the data path
+      // The path and tracer are both scrubbed, so every hop is reproducible in
+      // either scroll direction without component state updates.
       if (threatPathRef.current) {
         masterTimeline.fromTo(
           threatPathRef.current,
           { strokeDashoffset: 900 },
-          { strokeDashoffset: 0, ease: "power1.inOut", duration: 12 },
+          { strokeDashoffset: 0, ease: "power1.inOut", duration: 10 },
           26
         );
       }
 
-      // Nodes activate sequentially as signal travels through them
+      if (threatTracerRef.current) {
+        masterTimeline.fromTo(
+          threatTracerRef.current,
+          { attr: { cx: TRACE_NODE_X[0] }, opacity: 0 },
+          { opacity: 1, duration: 0.25 },
+          26
+        );
+        TRACE_NODE_X.slice(1).forEach((x, idx) => {
+          masterTimeline.to(
+            threatTracerRef.current,
+            { attr: { cx: x }, ease: "power1.inOut", duration: 1.8 },
+            26 + (idx + 1) * 1.8
+          );
+        });
+      }
+
+      // A hop enters with the signal; the previous hop remains legible but
+      // recedes so the active location is always unambiguous.
       threatNodeRefs.current.forEach((node, idx) => {
         if (!node) return;
+        const nodeStart = 26 + idx * 1.8;
         masterTimeline.fromTo(
           node,
           { opacity: 0, y: 16, scale: 0.92 },
-          { opacity: 1, y: 0, scale: 1, ease: "power2.out", duration: 2 },
-          26.5 + idx * 1.8
+          { opacity: 1, y: 0, scale: 1, ease: "power2.out", duration: 1.35 },
+          nodeStart
         );
+        masterTimeline.set(node, { attr: { "data-active": "true" } }, nodeStart);
+        if (idx < threatNodeRefs.current.length - 1) {
+          masterTimeline.set(node, { attr: { "data-active": "false" } }, nodeStart + 1.8);
+        }
+        if (idx > 0) {
+          masterTimeline.to(threatNodeRefs.current[idx - 1], { opacity: 0.46, scale: 0.97, duration: 0.8 }, nodeStart);
+        }
       });
 
-      // Word reveals for "YOUR CODE HAS A WEAK POINT."
+      // Diagnosis waits for the sink impact rather than competing with the
+      // live trace or the environment earlier in the sequence.
       threatWordRefs.current.forEach((w, idx) => {
         if (!w) return;
         masterTimeline.fromTo(
           w,
           { clipPath: "inset(0 100% 0 0)", filter: "blur(10px)", x: -20, opacity: 0 },
-          { clipPath: "inset(0 0% 0 0)", filter: "blur(0px)", x: 0, opacity: 1, ease: "power3.out", duration: 3 },
-          27 + idx * 1.5
+          { clipPath: "inset(0 0% 0 0)", filter: "blur(0px)", x: 0, opacity: 1, ease: "power3.out", duration: 1.5 },
+          37 + idx * 0.5
         );
       });
 
@@ -169,9 +200,13 @@ export default function CinematicExperience() {
         masterTimeline.fromTo(
           threatSinkRef.current,
           { scale: 0.6, opacity: 0 },
-          { scale: 1, opacity: 1, ease: "back.out(1.8)", duration: 2 },
+          { scale: 1, opacity: 1, ease: "back.out(1.8)", duration: 1.2 },
           36
         );
+        masterTimeline.to(threatSinkRef.current, { boxShadow: "0 0 28px 8px rgba(217,44,36,0.5)", duration: 0.7, yoyo: true, repeat: 1 }, 36);
+      }
+      if (threatNodeRefs.current[5]) {
+        masterTimeline.to(threatNodeRefs.current[5], { scale: 1.05, duration: 0.7, yoyo: true, repeat: 1 }, 36);
       }
 
       // Threat Trace physical exit into 3D space
@@ -189,9 +224,10 @@ export default function CinematicExperience() {
 
       // ── 4. NARRATIVE STATE 03 — SECURITY TOPOLOGY (45% to 70%) ──
       // Physical continuity: path expands into 3D topology
-      masterTimeline.set(topologyRef.current, { display: "flex", pointerEvents: "auto" }, 44);
+      const topologyElement = topologyRef.current?.element;
+      masterTimeline.set(topologyElement, { display: "flex", pointerEvents: "auto" }, 44);
       masterTimeline.fromTo(
-        topologyRef.current,
+        topologyElement,
         { opacity: 0 },
         { opacity: 1, ease: "power2.out", duration: 4 },
         45
@@ -212,6 +248,21 @@ export default function CinematicExperience() {
         46
       );
 
+      // Typography arrives only as the camera reaches each newly discovered
+      // layer of the graph. Completed phrases remain in place for the rest of
+      // the journey and reverse exactly with scroll.
+      topoPhraseRefs.current.forEach((phrase, index) => {
+        if (!phrase) return;
+        phrase.querySelectorAll("[data-topology-word]").forEach((word, wordIndex) => {
+          masterTimeline.fromTo(
+            word,
+            { clipPath: "inset(0 100% 0 0)", filter: "blur(10px)", y: 16, opacity: 0 },
+            { clipPath: "inset(0 0% 0 0)", filter: "blur(0px)", y: 0, opacity: 1, ease: "power3.out", duration: 1.25 },
+            48 + index * 3.6 + wordIndex * 0.18
+          );
+        });
+      });
+
       // Embedded 3D HUD reveals
       if (topoAlertRef.current) {
         masterTimeline.fromTo(
@@ -224,7 +275,7 @@ export default function CinematicExperience() {
 
       // Topology exit: camera zooms into highlighted compromised node
       masterTimeline.to(
-        topologyRef.current,
+        topologyElement,
         {
           opacity: 0,
           scale: 1.08,
@@ -233,7 +284,7 @@ export default function CinematicExperience() {
         },
         67
       );
-      masterTimeline.set(topologyRef.current, { display: "none", pointerEvents: "none" }, 71);
+      masterTimeline.set(topologyElement, { display: "none", pointerEvents: "none" }, 71);
 
       // ── 5. NARRATIVE STATE 04 — ANALYSIS CORE (70% to 90%) ────
       // 3D graph compresses into continuous analysis machine
@@ -525,6 +576,7 @@ export default function CinematicExperience() {
             registerWordRef={(el, i) => (threatWordRefs.current[i] = el)}
             registerNodeRef={(el, i) => (threatNodeRefs.current[i] = el)}
             registerPathRef={threatPathRef}
+            registerTracerRef={threatTracerRef}
             registerSinkAlertRef={threatSinkRef}
           />
 
@@ -532,6 +584,7 @@ export default function CinematicExperience() {
           <SecurityTopology
             ref={topologyRef}
             registerHeadlineRef={topoHeadRef}
+            registerHeadlinePhraseRef={(el, i) => (topoPhraseRefs.current[i] = el)}
             registerAlertRef={topoAlertRef}
             registerStatsRef={topoStatsRef}
           />
