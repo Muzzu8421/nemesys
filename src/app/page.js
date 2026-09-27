@@ -1,15 +1,17 @@
-import CinematicHero from "@/components/CinematicHero";
+import CinematicExperience from "@/components/experience/CinematicExperience";
 
 export default function Home() {
   return (
     <div className="bg-black selection:bg-[#D92C24]/40 selection:text-[#F2EFE6]">
       {/* 
-        Single Full-Screen Pinned Cinematic Experience:
-        - Scroll-controlled extracted frame sequence on canvas
-        - 01 HERO → 02 THE THREAT → 03 WHY NEMESYS → 04 HOW IT WORKS
-        - Final frame reached → smooth scale-down into card → pin released
+        NEMESYS — Cinematic Architecture:
+        - 01 Cinematic Hero (scroll-controlled frame sequence 0-25%)
+        - 02 Threat Trace (living data-flow security trace 25-45%)
+        - 03 Security Topology (3D spatial code graph in Three.js 45-70%)
+        - 04 Analysis Core (continuous instrumentation INPUT→TRACE→DETECT→FIX 70-90%)
+        - Final state: smooth scale-down into card (90-100%) and pin release
       */}
-      <CinematicHero />
+      <CinematicExperience />
 
       {/* ── FOOTER ───────────────────────────────────────────── */}
       <footer className="border-t border-[#F2EFE6]/5 bg-[#000000]">
