@@ -225,14 +225,15 @@ export default function CinematicExperience() {
       masterTimeline.set(threatRef.current, { display: "none", pointerEvents: "none" }, 45);
 
       // ── 4. NARRATIVE STATE 03 — SECURITY TOPOLOGY (45% to 70%) ──
-      // Physical continuity: path expands into 3D topology
+      // The last horizontal trace opens into the topology through a thin
+      // crimson-like aperture, rather than cutting to a separate scene.
       const topologyElement = topologyRef.current?.element;
-      masterTimeline.set(topologyElement, { display: "flex", pointerEvents: "auto" }, 44);
+      masterTimeline.set(topologyElement, { display: "flex", pointerEvents: "auto", transformOrigin: "50% 50%" }, 40.5);
       masterTimeline.fromTo(
         topologyElement,
-        { opacity: 0 },
-        { opacity: 1, ease: "power2.out", duration: 4 },
-        45
+        { opacity: 0, scale: 0.985, clipPath: "inset(48% 0 48% 0)" },
+        { opacity: 1, scale: 1, clipPath: "inset(0% 0 0% 0)", ease: "power2.out", duration: 4.5 },
+        41
       );
 
       // Camera journey through 3D Three.js space
@@ -275,27 +276,31 @@ export default function CinematicExperience() {
         );
       }
 
-      // Topology exit: camera zooms into highlighted compromised node
+      // Topology exit: the camera commits to the isolated sink, whose spatial
+      // view narrows into the analysis viewport instead of fading away.
       masterTimeline.to(
         topologyElement,
         {
           opacity: 0,
-          scale: 1.08,
+          scale: 1.28,
+          xPercent: 7,
+          clipPath: "inset(28% 22% 28% 22%)",
+          transformOrigin: "72% 54%",
           ease: "power2.inOut",
-          duration: 4,
+          duration: 4.5,
         },
-        67
+        66.5
       );
       masterTimeline.set(topologyElement, { display: "none", pointerEvents: "none" }, 71);
 
       // ── 5. NARRATIVE STATE 04 — ANALYSIS CORE (70% to 90%) ────
-      // 3D graph compresses into continuous analysis machine
-      masterTimeline.set(analysisRef.current, { display: "flex", pointerEvents: "auto" }, 70);
+      // The sink resolves into a code surface entering from the same focal side.
+      masterTimeline.set(analysisRef.current, { display: "flex", pointerEvents: "auto", transformOrigin: "72% 54%" }, 68.5);
       masterTimeline.fromTo(
         analysisRef.current,
-        { opacity: 0, scale: 0.96 },
-        { opacity: 1, scale: 1, ease: "power2.out", duration: 4 },
-        71
+        { opacity: 0, scale: 0.86, xPercent: 7, clipPath: "inset(26% 22% 26% 22%)" },
+        { opacity: 1, scale: 1, xPercent: 0, clipPath: "inset(0% 0 0% 0)", ease: "power2.out", duration: 4 },
+        68.5
       );
 
       // Taint line physically traces down code gutter
