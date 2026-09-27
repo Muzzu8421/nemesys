@@ -63,7 +63,9 @@ export default function CinematicExperience() {
   const analysisRef      = useRef(null);
   const analysisPipeRef  = useRef(null);
   const analysisTraceRef = useRef(null);
+  const analysisCodeLineRefs = useRef([]);
   const analysisDetectRef= useRef(null);
+  const analysisExplainRef = useRef(null);
   const analysisFixRef   = useRef(null);
   const analysisCtaRef   = useRef(null);
 
@@ -301,9 +303,19 @@ export default function CinematicExperience() {
         masterTimeline.fromTo(
           analysisTraceRef.current,
           { height: 0, opacity: 0 },
-          { height: 80, opacity: 1, ease: "power1.inOut", duration: 4 },
+          { height: 108, opacity: 1, ease: "power1.inOut", duration: 4 },
           74
         );
+      }
+
+      // The signal starts at the untrusted input and lands on the raw query.
+      // These are DOM style changes only, so scrub and reverse stay exact.
+      if (analysisCodeLineRefs.current[1]) {
+        masterTimeline.to(analysisCodeLineRefs.current[1], { backgroundColor: "rgba(53,191,255,0.14)", boxShadow: "inset 3px 0 0 #35BFFF", duration: 1.4 }, 74);
+        masterTimeline.to(analysisCodeLineRefs.current[1], { backgroundColor: "rgba(53,191,255,0.045)", boxShadow: "inset 0 0 0 transparent", duration: 0.8 }, 76);
+      }
+      if (analysisCodeLineRefs.current[2]) {
+        masterTimeline.to(analysisCodeLineRefs.current[2], { backgroundColor: "rgba(217,44,36,0.17)", boxShadow: "inset 3px 0 0 #D92C24, 0 0 22px rgba(217,44,36,0.2)", duration: 1.2 }, 76.2);
       }
 
       // DETECT stage: Line 03 isolated with crimson diagnostic box
@@ -311,9 +323,13 @@ export default function CinematicExperience() {
         masterTimeline.fromTo(
           analysisDetectRef.current,
           { opacity: 0, x: -10 },
-          { opacity: 1, x: 0, ease: "power2.out", duration: 3 },
-          77
+          { opacity: 1, x: 0, ease: "power2.out", duration: 1.3 },
+          78
         );
+        masterTimeline.to(analysisDetectRef.current, { boxShadow: "0 0 30px rgba(217,44,36,0.34)", duration: 0.7, yoyo: true, repeat: 1 }, 79);
+      }
+      if (analysisExplainRef.current) {
+        masterTimeline.fromTo(analysisExplainRef.current, { opacity: 0, y: 5 }, { opacity: 1, y: 0, ease: "power2.out", duration: 1.2 }, 80);
       }
 
       // FIX stage: Code physically transforms into parameterized query
@@ -329,6 +345,9 @@ export default function CinematicExperience() {
           { opacity: 1, display: "flex", scale: 1, ease: "power2.out", duration: 3 },
           82
         );
+        if (analysisCodeLineRefs.current[2]) {
+          masterTimeline.to(analysisCodeLineRefs.current[2], { opacity: 0.34, duration: 1.2 }, 81.4);
+        }
       }
 
       // Triumphant remediation CTA emerges
@@ -594,7 +613,9 @@ export default function CinematicExperience() {
             ref={analysisRef}
             registerPipelineRef={analysisPipeRef}
             registerTraceLineRef={analysisTraceRef}
+            registerCodeLineRef={(el, i) => (analysisCodeLineRefs.current[i] = el)}
             registerDetectBoxRef={analysisDetectRef}
+            registerExplainRef={analysisExplainRef}
             registerFixBoxRef={analysisFixRef}
             registerFinalCtaRef={analysisCtaRef}
           />

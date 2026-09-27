@@ -5,7 +5,7 @@ import { AnalysisPipeline } from "./AnalysisPipeline";
 import { CodeViewport } from "./CodeViewport";
 
 export const AnalysisCore = forwardRef(function AnalysisCore(
-  { registerPipelineRef, registerTraceLineRef, registerDetectBoxRef, registerFixBoxRef, registerFinalCtaRef, className = "", style = {} },
+  { registerPipelineRef, registerTraceLineRef, registerCodeLineRef, registerDetectBoxRef, registerExplainRef, registerFixBoxRef, registerFinalCtaRef, className = "", style = {} },
   ref
 ) {
   return (
@@ -21,7 +21,7 @@ export const AnalysisCore = forwardRef(function AnalysisCore(
           <p className="font-[family-name:var(--font-space-mono)] text-[10px] tracking-[0.22em] text-[#35BFFF]">INPUT / TRACE / DETECT / FIX</p>
           <h2 className="mt-2 font-[family-name:var(--font-anton)] text-[clamp(2rem,4vw,4.2rem)] leading-[0.9] tracking-[-0.02em] text-[#F2EFE6]">FOLLOW THE LINE.<br /><span className="text-[#D92C24]">FIX THE CAUSE.</span></h2>
         </div>
-        <CodeViewport registerTraceLineRef={registerTraceLineRef} registerDetectBoxRef={registerDetectBoxRef} registerFixBoxRef={registerFixBoxRef} />
+        <CodeViewport registerTraceLineRef={registerTraceLineRef} registerCodeLineRef={registerCodeLineRef} registerDetectBoxRef={registerDetectBoxRef} registerExplainRef={registerExplainRef} registerFixBoxRef={registerFixBoxRef} />
         <div ref={registerFinalCtaRef} className="flex items-center justify-between gap-4 border border-[#35BFFF]/45 bg-black/65 px-4 py-3 backdrop-blur-md pointer-events-auto" style={{ opacity: 0 }}>
           <div><strong className="font-[family-name:var(--font-anton)] text-xl tracking-[0.04em] text-[#F2EFE6]">ISSUE RESOLVED</strong><span className="ml-3 font-[family-name:var(--font-space-mono)] text-[10px] uppercase tracking-[0.12em] text-[#77736B]">Safe query path validated</span></div>
           <a href="#" className="shrink-0 bg-[#35BFFF] px-4 py-2 font-[family-name:var(--font-space-mono)] text-[10px] font-bold uppercase tracking-[0.12em] text-black">Scan code</a>

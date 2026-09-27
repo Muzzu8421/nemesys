@@ -53,8 +53,10 @@ export const FrameSequenceCanvas = forwardRef(function FrameSequenceCanvas(
 
     if (!img || !img.complete || img.naturalWidth === 0) return;
 
-    const cW = canvas.width;
-    const cH = canvas.height;
+    // Draw in CSS pixels. The backing store is larger on high-DPI displays,
+    // but using it here after the context scale would crop/zoom the frame.
+    const cW = canvas.clientWidth || canvas.width;
+    const cH = canvas.clientHeight || canvas.height;
     if (cW === 0 || cH === 0) return;
 
     const imgW = img.naturalWidth || 1920;
@@ -86,7 +88,7 @@ export const FrameSequenceCanvas = forwardRef(function FrameSequenceCanvas(
     canvas.width = rect.width * dpr;
     canvas.height = rect.height * dpr;
     const ctx = canvas.getContext("2d");
-    if (ctx) ctx.scale(dpr, dpr);
+    if (ctx) ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     drawFrame(playheadRef.current.frame);
   };
 
