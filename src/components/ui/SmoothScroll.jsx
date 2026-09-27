@@ -11,11 +11,14 @@ export function SmoothScroll({ children }) {
   useEffect(() => {
     const lenis = new Lenis({
       smoothWheel: true,
-      wheelMultiplier: 1,
+      wheelMultiplier: 0.9,
+      lerp: 0.1,
     });
 
+    // Keep ScrollTrigger in sync with Lenis
     lenis.on('scroll', ScrollTrigger.update);
 
+    // Integrate Lenis into GSAP's RAF loop
     gsap.ticker.add((time) => {
       lenis.raf(time * 1000);
     });
@@ -24,6 +27,7 @@ export function SmoothScroll({ children }) {
 
     return () => {
       lenis.destroy();
+      gsap.ticker.remove((time) => lenis.raf(time * 1000));
     };
   }, []);
 

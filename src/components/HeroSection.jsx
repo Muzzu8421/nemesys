@@ -41,14 +41,16 @@ export default function HeroSection() {
           alt="Hero background"
           fill
           priority
-          quality={95}
           className="object-cover object-[center_top] w-full h-full"
           sizes="100vw"
         />
       </div>
 
       {/* ── LOCALIZED OVERLAYS FOR TEXT READABILITY ──────────────────── */}
-      {/* Removed artificial backdrops/blur as requested to display image natively */}
+      {/* Left-side dark bed behind UI text, fades out before reaching the robot */}
+      <div className="absolute inset-0 z-[1] pointer-events-none bg-[linear-gradient(to_right,rgba(0,0,0,0.95)_0%,rgba(0,0,0,0.75)_25%,rgba(0,0,0,0)_60%)]" />
+      {/* Top-side dark strip behind the navbar */}
+      <div className="absolute inset-0 z-[1] pointer-events-none bg-[linear-gradient(to_bottom,rgba(0,0,0,0.85)_0%,rgba(0,0,0,0)_15%)]" />
 
       {/* ── TARGET CROSSHAIR (Left edge) ─────────────────────────────── */}
       <div className="absolute left-[-15px] top-[45%] z-[10] w-[60px] h-[60px] pointer-events-none">
@@ -61,9 +63,15 @@ export default function HeroSection() {
 
       {/* ── NAVIGATION ───────────────────────────────────────────────── */}
       <header className="relative z-[20] flex items-center justify-between px-[clamp(16px,3vw,52px)] py-[clamp(14px,2.5vh,28px)] shrink-0">
-        <a href="#" className="flex items-center gap-1.5 no-underline shrink-0 group">
-          <span className="text-[#D92C24] text-[0.85rem] leading-none">▲</span>
-          <span className="font-[family-name:var(--font-anton)] text-[clamp(1.1rem,1.8vw,1.5rem)] text-[#F2EFE6] tracking-[0.05em] uppercase leading-none drop-shadow-md">
+        <a href="#" className="flex items-center gap-[clamp(6px,1vw,10px)] no-underline shrink-0 group">
+          <Image 
+            src="/icon.png" 
+            alt="Nemesys Icon" 
+            width={28} 
+            height={28} 
+            className="w-[clamp(20px,2.2vw,28px)] h-auto object-contain"
+          />
+          <span className="font-[family-name:var(--font-anton)] text-[clamp(1.4rem,2.2vw,1.8rem)] text-[#F2EFE6] tracking-[0.05em] uppercase leading-[0.8] drop-shadow-md pt-1">
             NEMESYS
           </span>
         </a>

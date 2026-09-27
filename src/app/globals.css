@@ -6,6 +6,24 @@
   --font-condensed: var(--font-oswald), sans-serif;
   --font-mono: var(--font-ibm-mono), monospace;
 }
+
+/* ── CINEMATIC UTILITY CLASSES ────────────────────── */
+.will-change-transform { will-change: transform; }
+.will-change-clip { will-change: clip-path; }
+.gpu-layer { transform: translateZ(0); }
+
+@keyframes scan-line {
+  0%   { transform: translateY(-100%); opacity: 0.5; }
+  100% { transform: translateY(100vh);  opacity: 0;   }
+}
+.animate-scan { animation: scan-line 5s linear infinite; }
+
+@keyframes blink-cursor {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0; }
+}
+.animate-cursor { animation: blink-cursor 1s step-end infinite; }
+
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
