@@ -17,8 +17,6 @@ export const FrameSequenceCanvas = forwardRef(function FrameSequenceCanvas(
   const canvasRef = useRef(null);
   const imagesRef = useRef(new Array(totalFrames));
   const playheadRef = useRef({ frame: 0 });
-  const lastDrawnFrameRef = useRef(-1);
-  const rafIdRef = useRef(null);
 
   const getFrameUrl = (index) => {
     const num = String(index + 1).padStart(4, "0");
@@ -72,12 +70,47 @@ export const FrameSequenceCanvas = forwardRef(function FrameSequenceCanvas(
     } else {
       dH = cH;
       dW = cH * imgRatio;
-      oX = (cW - dW) / 2;
+      // The robot is centered in the source composition. Keep that focal point
+      // in portrait crops instead of applying the former desktop offset.
+      oX = (cW - dW) * 0.5;
     }
 
     ctx.clearRect(0, 0, cW, cH);
     ctx.drawImage(img, oX, oY, dW, dH);
-    lastDrawnFrameRef.current = idx;
+  };
+
+  const loadFrame = (frameIndex) => {
+    if (typeof window === "undefined") return null;
+
+    const index = Math.max(0, Math.min(totalFrames - 1, Math.round(frameIndex)));
+    const images = imagesRef.current;
+    if (images[index]) return images[index];
+
+    const image = new window.Image();
+    image.decoding = "async";
+    image.onload = () => {
+      if (Math.round(playheadRef.current.frame) === index) drawFrame(index);
+    };
+    image.src = getFrameUrl(index);
+    images[index] = image;
+    return image;
+  };
+
+  const preloadFrameWindow = (frameIndex) => {
+    if (typeof window === "undefined") return;
+
+    const current = Math.max(0, Math.min(totalFrames - 1, Math.round(frameIndex)));
+    const width = window.innerWidth;
+    const { behind, ahead } = width < 640
+      ? { behind: 2, ahead: 6 }
+      : width < 1024
+        ? { behind: 4, ahead: 10 }
+        : { behind: 6, ahead: 18 };
+
+    // Prioritize the frame under the playhead and upcoming scroll direction.
+    loadFrame(current);
+    for (let offset = 1; offset <= ahead; offset += 1) loadFrame(current + offset);
+    for (let offset = 1; offset <= behind; offset += 1) loadFrame(current - offset);
   };
 
   const resize = () => {
@@ -90,12 +123,14 @@ export const FrameSequenceCanvas = forwardRef(function FrameSequenceCanvas(
     const ctx = canvas.getContext("2d");
     if (ctx) ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     drawFrame(playheadRef.current.frame);
+    preloadFrameWindow(playheadRef.current.frame);
   };
 
   // Expose imperative handle for GSAP control
   useImperativeHandle(ref, () => ({
     setFrame(frameIndex) {
       playheadRef.current.frame = frameIndex;
+      preloadFrameWindow(frameIndex);
     },
     getPlayhead() {
       return playheadRef.current;
@@ -104,69 +139,21 @@ export const FrameSequenceCanvas = forwardRef(function FrameSequenceCanvas(
       return totalFrames;
     },
     forceRender() {
+      preloadFrameWindow(playheadRef.current.frame);
       drawFrame(playheadRef.current.frame);
     },
   }));
 
   useEffect(() => {
-    const images = imagesRef.current;
-    let isMounted = true;
-
-    // 1. Instant load of frame 0 for zero-latency initial hero view
-    const initialImg = new window.Image();
-    initialImg.src = getFrameUrl(0);
-    images[0] = initialImg;
-    initialImg.onload = () => {
-      if (isMounted) {
-        resize();
-        drawFrame(0);
-      }
-    };
-
-    // 2. Intelligent progressive batch loading
-    const loadRemainingFrames = () => {
-      // Immediate batch (first 25 frames)
-      for (let i = 1; i < Math.min(25, totalFrames); i++) {
-        const img = new window.Image();
-        img.src = getFrameUrl(i);
-        images[i] = img;
-      }
-
-      // Medium priority: keyframes across the timeline (every 4th frame)
-      for (let i = 25; i < totalFrames; i += 4) {
-        const img = new window.Image();
-        img.src = getFrameUrl(i);
-        images[i] = img;
-      }
-
-      // Background fill-in
-      for (let i = 25; i < totalFrames; i++) {
-        if (!images[i]) {
-          const img = new window.Image();
-          img.src = getFrameUrl(i);
-          images[i] = img;
-        }
-      }
-    };
-
-    const timer = setTimeout(loadRemainingFrames, 150);
+    // Frame zero renders immediately; subsequent requests follow the
+    // scroll playhead instead of preloading the full sequence on entry.
+    loadFrame(0);
+    preloadFrameWindow(0);
     window.addEventListener("resize", resize);
     resize();
 
-    // 3. Smooth rAF render loop
-    const renderLoop = () => {
-      if (Math.round(playheadRef.current.frame) !== lastDrawnFrameRef.current) {
-        drawFrame(playheadRef.current.frame);
-      }
-      rafIdRef.current = requestAnimationFrame(renderLoop);
-    };
-    rafIdRef.current = requestAnimationFrame(renderLoop);
-
     return () => {
-      isMounted = false;
-      clearTimeout(timer);
       window.removeEventListener("resize", resize);
-      if (rafIdRef.current) cancelAnimationFrame(rafIdRef.current);
     };
   }, [totalFrames, frameBaseUrl]);
 

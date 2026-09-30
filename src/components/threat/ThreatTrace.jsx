@@ -15,7 +15,7 @@ const TRACE_STEPS = [
 ];
 
 export const ThreatTrace = forwardRef(function ThreatTrace(
-  { registerWordRef, registerNodeRef, registerPathRef, registerTracerRef, registerSinkAlertRef, registerHeadRef, className = "", style = {} },
+  { registerWordRef, registerNodeRef, registerPathRef, registerTracerRef, registerMobilePathRef, registerMobileTracerRef, registerSinkAlertRef, registerHeadRef, className = "", style = {} },
   ref
 ) {
   return (
@@ -28,11 +28,11 @@ export const ThreatTrace = forwardRef(function ThreatTrace(
         <span className="hidden sm:block">SOURCE: <b className="text-[#35BFFF]">req.query.id</b> / 06 HOPS</span>
       </header>
 
-      <main className="relative z-10 mx-auto flex w-full max-w-7xl flex-col items-center gap-8 md:gap-12">
+      <main className="relative z-10 mx-auto flex w-full max-w-7xl flex-col items-center gap-6 md:gap-12">
         <ThreatHeadline registerHeadRef={registerHeadRef} registerWordRef={registerWordRef} />
         <div className="relative w-full">
-          <TracePath registerPathRef={registerPathRef} registerTracerRef={registerTracerRef} />
-          <div className="grid grid-cols-2 gap-3 md:grid-cols-6 md:gap-3">
+          <TracePath registerPathRef={registerPathRef} registerTracerRef={registerTracerRef} registerMobilePathRef={registerMobilePathRef} registerMobileTracerRef={registerMobileTracerRef} />
+          <div className="grid grid-cols-2 gap-2 sm:gap-3 md:grid-cols-6 md:gap-3">
             {TRACE_STEPS.map((step, index) => (
               <ThreatNode key={step.id} step={step} index={index} registerRef={registerNodeRef} registerSinkAlertRef={step.type === "sink" ? registerSinkAlertRef : undefined} />
             ))}

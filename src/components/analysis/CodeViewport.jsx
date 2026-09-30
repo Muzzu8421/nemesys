@@ -24,7 +24,7 @@ export function CodeViewport({ registerTraceLineRef, registerCodeLineRef, regist
       <div className="relative overflow-x-auto py-4 font-[family-name:var(--font-space-mono)] text-[clamp(10px,0.9vw,13px)] leading-[1.75]">
         <TraceLine registerTraceLineRef={registerTraceLineRef} />
         <CodeLine number="01" lineRef={(element) => registerCodeLineRef?.(element, 0)}><b className="text-[#35BFFF]">export async function</b> getUserProfile(req) {"{"}</CodeLine>
-        <CodeLine number="02" lineRef={(element) => registerCodeLineRef?.(element, 1)} className="bg-[#35BFFF]/[0.045]"><b className="text-[#35BFFF]">const</b> userId = <span className="border-b border-[#35BFFF] text-[#F2EFE6]">req.query.id</span>; <span className="text-[9px] text-[#35BFFF]">// TAINT SOURCE</span></CodeLine>
+        <CodeLine number="02" lineRef={(element) => registerCodeLineRef?.(element, 1)} className="bg-[#35BFFF]/[0.045]"><b className="text-[#35BFFF]">const</b> userId = <span className="border-b border-[#35BFFF] text-[#F2EFE6]">req.query.id</span>; <span className="text-[9px] text-[#35BFFF]">{"// TAINT SOURCE"}</span></CodeLine>
         <CodeLine number="03" lineRef={(element) => registerCodeLineRef?.(element, 2)} className="bg-[#D92C24]/[0.045]"><b className="text-[#35BFFF]">const</b> query = <span className="text-[#D92C24]">`SELECT * FROM users WHERE id = &apos;${"{"}userId{"}"}&apos;`</span>;</CodeLine>
         <FindingPanel registerDetectBoxRef={registerDetectBoxRef} registerExplainRef={registerExplainRef} />
         <FixReveal registerFixBoxRef={registerFixBoxRef} />

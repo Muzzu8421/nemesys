@@ -19,7 +19,7 @@ export const SecurityTopology = forwardRef(function SecurityTopology(
   }));
 
   return (
-    <section ref={rootRef} className={`absolute inset-0 z-[15] hidden select-none flex-col justify-between overflow-hidden px-6 py-10 pointer-events-none md:px-12 md:py-16 ${className}`} style={{ opacity: 0, ...style }}>
+    <section ref={rootRef} className={`absolute inset-0 z-[15] hidden select-none flex-col justify-between overflow-hidden px-4 py-6 pointer-events-none sm:px-6 sm:py-10 md:px-12 md:py-16 ${className}`} style={{ opacity: 0, ...style }}>
       <TopologyScene ref={sceneRef} />
       <div aria-hidden="true" className="absolute inset-0 z-[1] bg-[radial-gradient(ellipse_at_72%_48%,transparent_0%,rgba(0,0,0,.35)_47%,rgba(0,0,0,.88)_100%)]" />
 
@@ -28,9 +28,9 @@ export const SecurityTopology = forwardRef(function SecurityTopology(
         <span>INTER-PROCEDURAL GRAPH / <b className="text-[#35BFFF]">DEPTH 06</b></span>
       </header>
 
-      <div ref={registerHeadlineRef} className="relative z-10 max-w-xl md:ml-[5vw]">
+      <div ref={registerHeadlineRef} className="relative z-10 max-w-[17rem] sm:max-w-xl md:ml-[5vw]">
         <p className="mb-3 font-[family-name:var(--font-space-mono)] text-[10px] tracking-[0.24em] text-[#35BFFF]">DEPTH-FIRST DISCOVERY</p>
-        <h2 className="font-[family-name:var(--font-anton)] text-[clamp(2.7rem,5.4vw,6rem)] leading-[0.88] tracking-[-0.02em] text-[#F2EFE6]">
+        <h2 className="font-[family-name:var(--font-anton)] text-[clamp(2.25rem,5.4vw,6rem)] leading-[0.88] tracking-[-0.02em] text-[#F2EFE6]">
           <span ref={(element) => registerHeadlinePhraseRef?.(element, 0)} className="block">
             <span data-topology-word className="inline-block will-change-transform" style={{ clipPath: "inset(0 100% 0 0)", filter: "blur(10px)", opacity: 0 }}>SEE</span>{" "}
             <span data-topology-word className="inline-block will-change-transform" style={{ clipPath: "inset(0 100% 0 0)", filter: "blur(10px)", opacity: 0 }}>THE</span>{" "}
@@ -45,7 +45,7 @@ export const SecurityTopology = forwardRef(function SecurityTopology(
             <span data-topology-word className="inline-block will-change-transform" style={{ clipPath: "inset(0 100% 0 0)", filter: "blur(10px)", opacity: 0 }}>EFFECT.</span>
           </span>
         </h2>
-        <p className="mt-4 max-w-md font-[family-name:var(--font-ibm-plex)] text-sm leading-relaxed text-[#77736B]">
+        <p className="mt-3 max-w-md font-[family-name:var(--font-ibm-plex)] text-xs leading-relaxed text-[#77736B] sm:mt-4 sm:text-sm">
           NEMESYS follows execution through the codebase, exposing the relationship a single-file check cannot see.
         </p>
       </div>

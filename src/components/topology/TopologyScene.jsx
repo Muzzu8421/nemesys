@@ -21,12 +21,13 @@ export const TopologyScene = forwardRef(function TopologyScene(_, ref) {
     if (!mount) return undefined;
 
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const compact = window.matchMedia("(max-width: 767px)").matches;
     const scene = new THREE.Scene();
     scene.fog = new THREE.FogExp2(0x000000, 0.028);
-    const camera = new THREE.PerspectiveCamera(48, 1, 0.1, 120);
+    const camera = new THREE.PerspectiveCamera(compact ? 58 : 48, 1, 0.1, 120);
     const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true, powerPreference: "high-performance" });
     renderer.setClearColor(0x000000, 0);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, reducedMotion ? 1 : 1.5));
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, compact || reducedMotion ? 1 : 1.5));
     mount.appendChild(renderer.domElement);
     scene.add(new THREE.HemisphereLight(0x35bfff, 0x000000, 0.72));
 
@@ -36,7 +37,7 @@ export const TopologyScene = forwardRef(function TopologyScene(_, ref) {
     scene.add(group, ...connections.objects);
 
     const particleGeometry = new THREE.BufferGeometry();
-    const particlePositions = new Float32Array(150 * 3);
+    const particlePositions = new Float32Array((compact ? 60 : 150) * 3);
     for (let index = 0; index < particlePositions.length; index += 3) {
       particlePositions[index] = (Math.random() - 0.5) * 55;
       particlePositions[index + 1] = (Math.random() - 0.5) * 34;
@@ -59,7 +60,7 @@ export const TopologyScene = forwardRef(function TopologyScene(_, ref) {
     };
     const render = () => {
       currentProgress += (progressRef.current - currentProgress) * (reducedMotion ? 0.25 : 0.11);
-      updateTopologyCamera(camera, currentProgress, reducedMotion);
+      updateTopologyCamera(camera, currentProgress, reducedMotion, compact);
       connections.update(currentProgress);
       nodeMap.forEach((node, id) => {
         const reveal = THREE.MathUtils.smoothstep(currentProgress, node.userData.index * 0.1, node.userData.index * 0.1 + 0.28);

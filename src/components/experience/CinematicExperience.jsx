@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef } from "react";
 import Image from "next/image";
 import { FrameSequenceCanvas } from "./FrameSequenceCanvas";
 import { ThreatTrace } from "../threat/ThreatTrace";
@@ -41,7 +41,6 @@ export default function CinematicExperience() {
   // 01 — Hero UI Refs
   const heroUIRef        = useRef(null);
   const crosshairRef     = useRef(null);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // 02 — Threat Trace Refs
   const threatRef        = useRef(null);
@@ -50,6 +49,8 @@ export default function CinematicExperience() {
   const threatNodeRefs   = useRef([]);
   const threatPathRef    = useRef(null);
   const threatTracerRef  = useRef(null);
+  const threatMobilePathRef = useRef(null);
+  const threatMobileTracerRef = useRef(null);
   const threatSinkRef    = useRef(null);
 
   // 03 — Security Topology Refs
@@ -83,6 +84,7 @@ export default function CinematicExperience() {
 
       const totalFrames = frameCanvasRef.current?.getTotalFrames() || 227;
       const playhead = frameCanvasRef.current?.getPlayhead() || { frame: 0 };
+      const finalCardScale = window.matchMedia("(max-width: 640px)").matches ? 0.92 : 0.82;
 
       // ── MASTER SCRUBBED SCROLLTRIGGER TIMELINE ─────────────────
       masterTimeline = gsap.timeline({
@@ -148,6 +150,14 @@ export default function CinematicExperience() {
           26
         );
       }
+      if (threatMobilePathRef.current) {
+        masterTimeline.fromTo(
+          threatMobilePathRef.current,
+          { strokeDashoffset: 1300 },
+          { strokeDashoffset: 0, ease: "power1.inOut", duration: 10 },
+          26
+        );
+      }
 
       if (threatTracerRef.current) {
         masterTimeline.fromTo(
@@ -160,6 +170,22 @@ export default function CinematicExperience() {
           masterTimeline.to(
             threatTracerRef.current,
             { attr: { cx: x }, ease: "power1.inOut", duration: 1.8 },
+            26 + (idx + 1) * 1.8
+          );
+        });
+      }
+      if (threatMobileTracerRef.current) {
+        const mobileTraceNodes = [[250, 100], [750, 100], [750, 300], [250, 300], [250, 500], [750, 500]];
+        masterTimeline.fromTo(
+          threatMobileTracerRef.current,
+          { attr: { cx: mobileTraceNodes[0][0], cy: mobileTraceNodes[0][1] }, opacity: 0 },
+          { opacity: 1, duration: 0.25 },
+          26
+        );
+        mobileTraceNodes.slice(1).forEach(([x, y], idx) => {
+          masterTimeline.to(
+            threatMobileTracerRef.current,
+            { attr: { cx: x, cy: y }, ease: "power1.inOut", duration: 1.8 },
             26 + (idx + 1) * 1.8
           );
         });
@@ -372,7 +398,7 @@ export default function CinematicExperience() {
       masterTimeline.to(
         heroCardRef.current,
         {
-          scale: 0.82,
+          scale: finalCardScale,
           borderRadius: "28px",
           boxShadow:
             "0 35px 90px -15px rgba(0,0,0,0.95), 0 0 0 1px rgba(255,255,255,0.12)",
@@ -479,32 +505,12 @@ export default function CinematicExperience() {
                 </span>
               </a>
 
-              <nav className="hidden md:flex items-center gap-[clamp(16px,2.5vw,40px)] absolute left-1/2 -translate-x-1/2">
-                {["Features", "How It Works", "Pricing", "Docs", "Blog"].map((item) => (
-                  <a
-                    key={item}
-                    href="#"
-                    className="font-[family-name:var(--font-space-mono)] text-[clamp(0.6rem,0.8vw,0.75rem)] font-medium text-[#E8E3D7]/75 uppercase tracking-[0.1em] hover:text-[#F2EFE6] transition-colors whitespace-nowrap"
-                  >
-                    {item}
-                  </a>
-                ))}
-              </nav>
-
               <a
                 href="#"
-                className="hidden md:inline-flex items-center gap-1.5 px-[clamp(12px,1.5vw,22px)] py-[clamp(5px,0.8vh,8px)] border-[1.5px] border-[#E8E3D7]/40 bg-black/50 text-[#F2EFE6] font-[family-name:var(--font-space-mono)] font-bold text-[clamp(0.6rem,0.8vw,0.75rem)] uppercase tracking-[0.1em] shrink-0 transition-colors hover:bg-[#E8E3D7]/15 hover:border-[#E8E3D7]/80 shadow-sm [clip-path:polygon(0_0,calc(100%-6px)_0,100%_6px,100%_100%,6px_100%,0_calc(100%-6px))]"
+                className="inline-flex items-center gap-1.5 px-[clamp(12px,1.5vw,22px)] py-[clamp(5px,0.8vh,8px)] border-[1.5px] border-[#E8E3D7]/40 bg-black/50 text-[#F2EFE6] font-[family-name:var(--font-space-mono)] font-bold text-[clamp(0.6rem,0.8vw,0.75rem)] uppercase tracking-[0.1em] shrink-0 transition-colors hover:bg-[#E8E3D7]/15 hover:border-[#E8E3D7]/80 shadow-sm [clip-path:polygon(0_0,calc(100%-6px)_0,100%_6px,100%_100%,6px_100%,0_calc(100%-6px))]"
               >
                 Get Started →
               </a>
-
-              <button
-                className="md:hidden flex bg-transparent border-[1.5px] border-[#E8E3D7]/40 text-[#F2EFE6] px-2.5 py-1.5 text-base cursor-pointer"
-                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                aria-label="Menu"
-              >
-                ☰
-              </button>
             </header>
 
             {/* Main Hero Content Area */}
@@ -581,7 +587,7 @@ export default function CinematicExperience() {
             </div>
 
             {/* Handwritten Editorial Note */}
-            <div className="absolute right-[clamp(20px,4vw,60px)] bottom-[clamp(40px,8vh,100px)] z-[15] max-w-[clamp(160px,12vw,220px)] font-[family-name:var(--font-caveat)] font-bold text-[clamp(1.4rem,1.8vw,1.8rem)] leading-[1.1] text-[#E8E3D7]/90 -rotate-[4deg] opacity-95 pointer-events-none drop-shadow-[1px_2px_3px_rgba(0,0,0,0.6)]">
+            <div className="absolute right-[clamp(20px,4vw,60px)] bottom-[clamp(40px,8vh,100px)] z-[15] hidden max-w-[clamp(160px,12vw,220px)] font-[family-name:var(--font-caveat)] font-bold text-[clamp(1.4rem,1.8vw,1.8rem)] leading-[1.1] text-[#E8E3D7]/90 -rotate-[4deg] opacity-95 pointer-events-none drop-shadow-[1px_2px_3px_rgba(0,0,0,0.6)] sm:block">
               BUILD <span className="text-[#D92C24]">SAFER</span> SOFTWARE<br />
               FOR A <span className="text-[#D92C24]">STRONGER</span> TOMORROW.
             </div>
@@ -601,6 +607,8 @@ export default function CinematicExperience() {
             registerNodeRef={(el, i) => (threatNodeRefs.current[i] = el)}
             registerPathRef={threatPathRef}
             registerTracerRef={threatTracerRef}
+            registerMobilePathRef={threatMobilePathRef}
+            registerMobileTracerRef={threatMobileTracerRef}
             registerSinkAlertRef={threatSinkRef}
           />
 
